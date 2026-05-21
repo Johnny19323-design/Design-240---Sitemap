@@ -13,128 +13,122 @@ const officialList = document.getElementById("officialList");
 let allSites = [];
 let filteredSites = [];
 let allRegionNames = [];
+
 let activeRegionName = null;
+let svgLoaded = false;
 
 let minX = Infinity;
 let maxX = -Infinity;
 let minY = Infinity;
 let maxY = -Infinity;
 
-const pointOffsetX = 20;
-const paddingX = 6;
-const paddingY = 6;
+// Padding inside visible SVG area
+const paddingLeft = 0.06;
+const paddingRight = 0.94;
+const paddingTop = 0.06;
+const paddingBottom = 0.94;
 
-loadSVGMap();
-loadCSVData();
+init();
+
+async function init() {
+  await loadSVGMap();
+  await loadCSVData();
+  setupEvents();
+  applyFilters();
+}
 
 async function loadSVGMap() {
-  const response = await fetch(svgFile);
-  const svgText = await response.text();
-  svgMapContainer.innerHTML = svgText;
-
-  prepareSVGRegions();
+  try {
+    const response = await fetch(svgFile);
+    const svgText = await response.text();
+    svgMapContainer.innerHTML = svgText;
+    prepareSVGRegions();
+    svgLoaded = true;
+  } catch (error) {
+    console.error("Failed to load SVG:", error);
+  }
 }
 
 function prepareSVGRegions() {
   const svg = svgMapContainer.querySelector("svg");
   if (!svg) return;
 
-  const possibleShapes = svg.querySelectorAll("path, polygon, g");
+  svg.removeAttribute("width");
+  svg.removeAttribute("height");
 
-  possibleShapes.forEach((shape, index) => {
-    // skip the outer svg group if too broad
-    if (shape === svg) return;
+  // This SVG uses path ids like NZOTA, NZCAN, etc.
+  const regionShapes = svg.querySelectorAll("path[id], polygon[id]");
 
-    // try to find region name from id / name / title
-    const regionName =
-      shape.getAttribute("name") ||
-      shape.getAttribute("id") ||
-      shape.querySelector("title")?.textContent ||
-      `region-${index}`;
-
-    // avoid tagging marker groups or empty groups
-    const hasVisibleGeometry =
-      shape.tagName.toLowerCase() === "path" ||
-      shape.tagName.toLowerCase() === "polygon" ||
-      shape.querySelector("path, polygon");
-
-    if (!hasVisibleGeometry) return;
+  regionShapes.forEach((shape) => {
+    const regionId = shape.getAttribute("id");
+    if (!regionId) return;
 
     shape.classList.add("region-shape");
-    shape.dataset.region = regionName;
+    shape.dataset.regionId = regionId;
 
     shape.addEventListener("click", () => {
-      activeRegionName = regionName;
+      activeRegionName = regionId;
       highlightActiveRegion();
-      updateRegionPanel(regionName);
-      regionFilter.value = "all";
+      updateRegionPanel(regionId);
       applyFilters();
     });
   });
 }
 
-function highlightActiveRegion() {
-  const shapes = svgMapContainer.querySelectorAll(".region-shape");
-  shapes.forEach(shape => {
-    shape.classList.remove("active-region");
-    if (activeRegionName && shape.dataset.region === activeRegionName) {
-      shape.classList.add("active-region");
-    }
-  });
-}
+async function loadCSVData() {
+  return new Promise((resolve) => {
+    Papa.parse(csvFile, {
+      download: true,
+      header: true,
+      skipEmptyLines: true,
+      complete: function(results) {
+        allSites = results.data
+          .map((row) => {
+            const x2 = Number(row["x2"]);
+            const y2 = Number(row["y2"]);
+            const unpowered = Number(row["Number of unpowered sites"]);
 
-function loadCSVData() {
-  Papa.parse(csvFile, {
-    download: true,
-    header: true,
-    skipEmptyLines: true,
-    complete: function(results) {
-      allSites = results.data
-        .map((row) => {
-          const x2 = Number(row["x2"]);
-          const y2 = Number(row["y2"]);
-          const unpowered = Number(row["Number of unpowered sites"]);
+            if (isNaN(x2) || isNaN(y2)) return null;
 
-          if (isNaN(x2) || isNaN(y2)) return null;
+            minX = Math.min(minX, x2);
+            maxX = Math.max(maxX, x2);
+            minY = Math.min(minY, y2);
+            maxY = Math.max(maxY, y2);
 
-          minX = Math.min(minX, x2);
-          maxX = Math.max(maxX, x2);
-          minY = Math.min(minY, y2);
-          maxY = Math.max(maxY, y2);
+            return {
+              siteName: row["Name of site"] || "Unknown site",
+              region: row["Region"] || "Not specified",
+              category: row["Campsite category"] || "Unknown",
+              accessBy: row["Access by"] || "Not specified",
+              dogPolicy: cleanText(row["Dogs alllowed"]),
+              facilities: cleanText(row["Facilities"]),
+              unpoweredSites: isNaN(unpowered) ? 0 : unpowered,
+              url: row["URL to webpage"] || "",
+              x2,
+              y2
+            };
+          })
+          .filter(Boolean);
 
-          return {
-            siteName: row["Name of site"] || "Unknown site",
-            region: row["Region"] || "Not specified",
-            category: row["Campsite category"] || "Unknown",
-            accessBy: row["Access by"] || "Not specified",
-            dogPolicy: cleanText(row["Dogs alllowed"]),
-            facilities: cleanText(row["Facilities"]),
-            unpoweredSites: isNaN(unpowered) ? 0 : unpowered,
-            url: row["URL to webpage"] || "",
-            x2,
-            y2
-          };
-        })
-        .filter(Boolean);
-
-      allRegionNames = [...new Set(allSites.map(site => site.region).filter(Boolean))].sort();
-      populateFilters();
-      applyFilters();
-    }
+        allRegionNames = [...new Set(allSites.map((site) => site.region).filter(Boolean))].sort();
+        populateFilters();
+        resolve();
+      }
+    });
   });
 }
 
 function populateFilters() {
-  const categories = [...new Set(allSites.map(site => site.category).filter(Boolean))].sort();
+  const categories = [...new Set(allSites.map((site) => site.category).filter(Boolean))].sort();
 
-  allRegionNames.forEach(region => {
+  allRegionNames.forEach((region) => {
     const option = document.createElement("option");
     option.value = region;
     option.textContent = region;
     regionFilter.appendChild(option);
   });
 
-  categories.forEach(category => {
+  categories.forEach((category) => {
     const option = document.createElement("option");
     option.value = category;
     option.textContent = category;
@@ -142,17 +136,42 @@ function populateFilters() {
   });
 }
 
+function setupEvents() {
+  regionFilter.addEventListener("change", () => {
+    activeRegionName = null;
+    highlightActiveRegion();
+    applyFilters();
+  });
+
+  categoryFilter.addEventListener("change", () => {
+    applyFilters();
+  });
+
+  resetBtn.addEventListener("click", () => {
+    regionFilter.value = "all";
+    categoryFilter.value = "all";
+    activeRegionName = null;
+    highlightActiveRegion();
+    applyFilters();
+  });
+
+  window.addEventListener("resize", () => {
+    renderMarkers();
+  });
+}
+
 function applyFilters() {
-  filteredSites = allSites.filter(site => {
-    const regionMatch = regionFilter.value === "all" || site.region === regionFilter.value;
-    const categoryMatch = categoryFilter.value === "all" || site.category === categoryFilter.value;
+  filteredSites = allSites.filter((site) => {
+    const regionMatch =
+      regionFilter.value === "all" || site.region === regionFilter.value;
 
-    if (activeRegionName) {
-      // if a region on the SVG is clicked, keep only matching region names where possible
-      return regionMatch && categoryMatch && site.region.toLowerCase().includes(activeRegionName.toLowerCase().replace(/-/g, " "));
-    }
+    const categoryMatch =
+      categoryFilter.value === "all" || site.category === categoryFilter.value;
 
-    return regionMatch && categoryMatch;
+    const activeRegionMatch =
+      !activeRegionName || matchesSvgRegion(site.region, activeRegionName);
+
+    return regionMatch && categoryMatch && activeRegionMatch;
   });
 
   renderMarkers();
@@ -165,17 +184,33 @@ function applyFilters() {
 function renderMarkers() {
   markersLayer.innerHTML = "";
 
-  filteredSites.forEach(site => {
+  if (!svgLoaded) return;
+
+  const svg = svgMapContainer.querySelector("svg");
+  if (!svg) return;
+
+  const svgRect = svg.getBoundingClientRect();
+  const wrapperRect = svgMapContainer.getBoundingClientRect();
+
+  const svgLeft = svgRect.left - wrapperRect.left;
+  const svgTop = svgRect.top - wrapperRect.top;
+  const svgWidth = svgRect.width;
+  const svgHeight = svgRect.height;
+
+  filteredSites.forEach((site) => {
     const marker = document.createElement("div");
     marker.className = `marker ${getCategoryClass(site.category)}`;
 
-    const xPercent = mapValue(site.x2, minX, maxX, paddingX, 100 - paddingX) + pointOffsetX * 0.08;
-    const yPercent = mapValue(site.y2, maxY, minY, paddingY, 100 - paddingY);
+    const relativeX = mapValue(site.x2, minX, maxX, paddingLeft, paddingRight);
+    const relativeY = mapValue(site.y2, maxY, minY, paddingTop, paddingBottom);
 
-    marker.style.left = `${xPercent}%`;
-    marker.style.top = `${yPercent}%`;
+    const px = svgLeft + svgWidth * relativeX;
+    const py = svgTop + svgHeight * relativeY;
 
-    const size = clamp(mapValue(site.unpoweredSites, 0, 300, 6, 14), 6, 14);
+    marker.style.left = `${px}px`;
+    marker.style.top = `${py}px`;
+
+    const size = clamp(mapValue(site.unpoweredSites, 0, 300, 5, 10), 5, 10);
     marker.style.width = `${size}px`;
     marker.style.height = `${size}px`;
 
@@ -183,7 +218,21 @@ function renderMarkers() {
       updateCampsitePanel(site);
     });
 
+    marker.addEventListener("click", () => {
+      updateCampsitePanel(site);
+    });
+
     markersLayer.appendChild(marker);
+  });
+}
+
+function highlightActiveRegion() {
+  const shapes = svgMapContainer.querySelectorAll(".region-shape");
+  shapes.forEach((shape) => {
+    shape.classList.remove("active-region");
+    if (activeRegionName && shape.dataset.regionId === activeRegionName) {
+      shape.classList.add("active-region");
+    }
   });
 }
 
@@ -197,30 +246,79 @@ function updateCampsitePanel(site) {
     <li><strong>Dog Policy:</strong> ${site.dogPolicy}</li>
     <li><strong>Unpowered Sites:</strong> ${site.unpoweredSites}</li>
     <li><strong>Facilities:</strong> ${site.facilities}</li>
-    <li><strong>Website:</strong> ${site.url ? `<a href="${site.url}" target="_blank">Open DOC page</a>` : "Not available"}</li>
+    <li><strong>Website:</strong> ${
+      site.url ? `<a href="${site.url}" target="_blank">Open DOC page</a>` : "Not available"
+    }</li>
   `;
 }
 
-function updateRegionPanel(regionName) {
-  detailTitle.textContent = regionName;
+function updateRegionPanel(regionId) {
+  const matchedSites = allSites.filter((site) => matchesSvgRegion(site.region, regionId));
 
-  const regionSites = allSites.filter(site =>
-    site.region.toLowerCase().includes(regionName.toLowerCase().replace(/-/g, " "))
-  );
+  detailTitle.textContent = getFriendlyRegionName(regionId);
 
   officialList.innerHTML = `
-    <li><strong>Selected Region:</strong> ${regionName}</li>
-    <li><strong>Campsites found:</strong> ${regionSites.length}</li>
-    <li><strong>Purpose:</strong> region highlight + campsite filtering</li>
-    <li><strong>Next step:</strong> connect official and experience layers</li>
+    <li><strong>Selected Region:</strong> ${getFriendlyRegionName(regionId)}</li>
+    <li><strong>Campsites found:</strong> ${matchedSites.length}</li>
+    <li><strong>Map interaction:</strong> SVG region highlight</li>
+    <li><strong>Next step:</strong> connect official data and experience layer</li>
   `;
 }
 
 function clearDetailPanel() {
   detailTitle.textContent = "Select a region or campsite";
   officialList.innerHTML = `
-    <li>Click a region on the map or move over a campsite marker.</li>
+    <li>Click a region on the map or hover over a campsite marker.</li>
   `;
+}
+
+function matchesSvgRegion(regionName, regionId) {
+  const cleanedRegion = regionName.toLowerCase().trim();
+
+  const regionMap = {
+    NZAUK: ["auckland"],
+    NZBOP: ["bay of plenty"],
+    NZCAN: ["canterbury"],
+    NZGIS: ["gisborne"],
+    NZHKB: ["hawke's bay", "hawkes bay"],
+    NZMBH: ["marlborough"],
+    NZMWT: ["manawatu-whanganui", "manawatu whanganui"],
+    NZNSN: ["nelson", "nelson/tasman", "tasman"],
+    NZNTL: ["northland"],
+    NZOTA: ["otago"],
+    NZSTL: ["southland"],
+    NZTAS: ["tasman", "nelson/tasman"],
+    NZTKI: ["taranaki"],
+    NZWGN: ["wellington"],
+    NZWKO: ["waikato"],
+    NZWTC: ["west coast"]
+  };
+
+  const possibleNames = regionMap[regionId] || [];
+  return possibleNames.some((name) => cleanedRegion.includes(name));
+}
+
+function getFriendlyRegionName(regionId) {
+  const names = {
+    NZAUK: "Auckland",
+    NZBOP: "Bay of Plenty",
+    NZCAN: "Canterbury",
+    NZGIS: "Gisborne",
+    NZHKB: "Hawke's Bay",
+    NZMBH: "Marlborough",
+    NZMWT: "Manawatū-Whanganui",
+    NZNSN: "Nelson",
+    NZNTL: "Northland",
+    NZOTA: "Otago",
+    NZSTL: "Southland",
+    NZTAS: "Tasman",
+    NZTKI: "Taranaki",
+    NZWGN: "Wellington",
+    NZWKO: "Waikato",
+    NZWTC: "West Coast"
+  };
+
+  return names[regionId] || regionId;
 }
 
 function getCategoryClass(category) {
@@ -245,21 +343,3 @@ function mapValue(value, start1, stop1, start2, stop2) {
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
-
-regionFilter.addEventListener("change", () => {
-  activeRegionName = null;
-  highlightActiveRegion();
-  applyFilters();
-});
-
-categoryFilter.addEventListener("change", () => {
-  applyFilters();
-});
-
-resetBtn.addEventListener("click", () => {
-  regionFilter.value = "all";
-  categoryFilter.value = "all";
-  activeRegionName = null;
-  highlightActiveRegion();
-  applyFilters();
-});
