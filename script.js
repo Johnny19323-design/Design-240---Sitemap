@@ -1,4 +1,4 @@
-const csvFile = "DOC_Campsites_8058496540299118787(1).csv";
+const csvFile = "DOC_Campsites_8058496540299118787.csv";
 const svgFile = "nz-admins.svg";
 
 const svgMapContainer = document.getElementById("svgMapContainer");
