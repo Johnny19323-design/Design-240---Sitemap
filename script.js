@@ -1,4 +1,4 @@
-const csvFile = "DOC_Campsites_8058496540299118787.csv";
+const csvFile = "DOC_Campsites_8058496540299118787(1).csv";
 const svgFile = "nz-admins.svg";
 
 const svgMapContainer = document.getElementById("svgMapContainer");
@@ -10,19 +10,25 @@ const resetBtn = document.getElementById("resetBtn");
 const detailTitle = document.getElementById("detailTitle");
 const officialList = document.getElementById("officialList");
 
+const mapContent = document.getElementById("mapContent");
+const zoomInBtn = document.getElementById("zoomInBtn");
+const zoomOutBtn = document.getElementById("zoomOutBtn");
+const zoomResetBtn = document.getElementById("zoomResetBtn");
+
 let allSites = [];
 let filteredSites = [];
 let allRegionNames = [];
 
 let activeRegionName = null;
 let svgLoaded = false;
+let zoomLevel = 1;
 
 let minX = Infinity;
 let maxX = -Infinity;
 let minY = Infinity;
 let maxY = -Infinity;
 
-// Padding inside visible SVG area
+// marker mapping padding inside visible SVG area
 const paddingLeft = 0.06;
 const paddingRight = 0.94;
 const paddingTop = 0.06;
@@ -56,7 +62,6 @@ function prepareSVGRegions() {
   svg.removeAttribute("width");
   svg.removeAttribute("height");
 
-  // This SVG uses path ids like NZOTA, NZCAN, etc.
   const regionShapes = svg.querySelectorAll("path[id], polygon[id]");
 
   regionShapes.forEach((shape) => {
@@ -70,7 +75,7 @@ function prepareSVGRegions() {
       activeRegionName = regionId;
       highlightActiveRegion();
       updateRegionPanel(regionId);
-      applyFilters();
+      renderMarkers();
     });
   });
 }
@@ -155,9 +160,28 @@ function setupEvents() {
     applyFilters();
   });
 
+  zoomInBtn.addEventListener("click", () => {
+    zoomLevel = Math.min(zoomLevel + 0.2, 3);
+    applyZoom();
+  });
+
+  zoomOutBtn.addEventListener("click", () => {
+    zoomLevel = Math.max(zoomLevel - 0.2, 0.8);
+    applyZoom();
+  });
+
+  zoomResetBtn.addEventListener("click", () => {
+    zoomLevel = 1;
+    applyZoom();
+  });
+
   window.addEventListener("resize", () => {
     renderMarkers();
   });
+}
+
+function applyZoom() {
+  mapContent.style.transform = `scale(${zoomLevel})`;
 }
 
 function applyFilters() {
@@ -168,10 +192,7 @@ function applyFilters() {
     const categoryMatch =
       categoryFilter.value === "all" || site.category === categoryFilter.value;
 
-    const activeRegionMatch =
-      !activeRegionName || matchesSvgRegion(site.region, activeRegionName);
-
-    return regionMatch && categoryMatch && activeRegionMatch;
+    return regionMatch && categoryMatch;
   });
 
   renderMarkers();
@@ -253,15 +274,13 @@ function updateCampsitePanel(site) {
 }
 
 function updateRegionPanel(regionId) {
-  const matchedSites = allSites.filter((site) => matchesSvgRegion(site.region, regionId));
-
   detailTitle.textContent = getFriendlyRegionName(regionId);
 
   officialList.innerHTML = `
     <li><strong>Selected Region:</strong> ${getFriendlyRegionName(regionId)}</li>
-    <li><strong>Campsites found:</strong> ${matchedSites.length}</li>
-    <li><strong>Map interaction:</strong> SVG region highlight</li>
-    <li><strong>Next step:</strong> connect official data and experience layer</li>
+    <li><strong>Map interaction:</strong> region highlight only</li>
+    <li><strong>Markers:</strong> remain visible unless filtered from the left panel</li>
+    <li><strong>Next step:</strong> connect official data and experience layers</li>
   `;
 }
 
@@ -270,32 +289,6 @@ function clearDetailPanel() {
   officialList.innerHTML = `
     <li>Click a region on the map or hover over a campsite marker.</li>
   `;
-}
-
-function matchesSvgRegion(regionName, regionId) {
-  const cleanedRegion = regionName.toLowerCase().trim();
-
-  const regionMap = {
-    NZAUK: ["auckland"],
-    NZBOP: ["bay of plenty"],
-    NZCAN: ["canterbury"],
-    NZGIS: ["gisborne"],
-    NZHKB: ["hawke's bay", "hawkes bay"],
-    NZMBH: ["marlborough"],
-    NZMWT: ["manawatu-whanganui", "manawatu whanganui"],
-    NZNSN: ["nelson", "nelson/tasman", "tasman"],
-    NZNTL: ["northland"],
-    NZOTA: ["otago"],
-    NZSTL: ["southland"],
-    NZTAS: ["tasman", "nelson/tasman"],
-    NZTKI: ["taranaki"],
-    NZWGN: ["wellington"],
-    NZWKO: ["waikato"],
-    NZWTC: ["west coast"]
-  };
-
-  const possibleNames = regionMap[regionId] || [];
-  return possibleNames.some((name) => cleanedRegion.includes(name));
 }
 
 function getFriendlyRegionName(regionId) {

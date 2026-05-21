@@ -134,8 +134,23 @@ body {
 .map-stage {
   min-height: 640px;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.map-toolbar {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.map-toolbar button {
+  border: 1px solid #cccccc;
+  background: white;
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
 }
 
 .map-wrapper {
@@ -144,6 +159,15 @@ body {
   max-width: 700px;
   min-height: 620px;
   margin: 0 auto;
+  overflow: hidden;
+}
+
+.map-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-origin: center center;
+  transition: transform 0.2s ease;
 }
 
 .svg-map-container {
@@ -169,7 +193,7 @@ body {
   border-radius: 50%;
   transform: translate(-50%, -50%);
   border: 2px solid rgba(255,255,255,0.95);
-  box-shadow: 0 0 0 6px rgba(0,0,0,0.05);
+  box-shadow: 0 0 0 4px rgba(0,0,0,0.05);
   pointer-events: auto;
   transition: transform 0.12s ease;
 }

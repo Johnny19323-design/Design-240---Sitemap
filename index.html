@@ -12,7 +12,7 @@
     <header class="topbar">
       <div class="brand">
         <h1>How Data Defines Nature</h1>
-        <p>DOC Campsites · SVG region map prototype</p>
+        <p>DOC Campsites · Official dataset prototype</p>
       </div>
 
       <div class="topbar-right">
@@ -55,9 +55,17 @@
         </div>
 
         <div class="map-stage panel">
+          <div class="map-toolbar">
+            <button id="zoomInBtn">+</button>
+            <button id="zoomOutBtn">−</button>
+            <button id="zoomResetBtn">Reset</button>
+          </div>
+
           <div class="map-wrapper" id="mapWrapper">
-            <div id="svgMapContainer" class="svg-map-container"></div>
-            <div id="markersLayer" class="markers-layer"></div>
+            <div class="map-content" id="mapContent">
+              <div id="svgMapContainer" class="svg-map-container"></div>
+              <div id="markersLayer" class="markers-layer"></div>
+            </div>
           </div>
         </div>
       </section>
@@ -73,7 +81,7 @@
             <div class="detail-section">
               <h4>Region / Campsite Info</h4>
               <ul class="detail-list" id="officialList">
-                <li>Click a region on the map or move over a campsite marker.</li>
+                <li>Click a region on the map or hover over a campsite marker.</li>
               </ul>
             </div>
 
