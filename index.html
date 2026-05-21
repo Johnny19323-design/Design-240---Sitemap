@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How Data Defines Nature</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <h1>How Data Defines Nature</h1>
+        <p>DOC Campsites · SVG region map prototype</p>
+      </div>
+
+      <div class="topbar-right">
+        <div class="mode-switch">
+          <button class="mode-btn active">Official View</button>
+          <button class="mode-btn">Experience View</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-layout">
+      <!-- Left Filters -->
+      <aside class="panel filters-panel">
+        <h2>Filters</h2>
+
+        <div class="filter-group">
+          <label for="regionFilter">Region</label>
+          <select id="regionFilter">
+            <option value="all">All Regions</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="categoryFilter">Campsite Category</label>
+          <select id="categoryFilter">
+            <option value="all">All Categories</option>
+          </select>
+        </div>
+
+        <button class="reset-btn" id="resetBtn">Reset Filters</button>
+      </aside>
+
+      <!-- Middle Map -->
+      <section class="map-panel">
+        <div class="map-header panel">
+          <h2>Interactive Campsite Map</h2>
+          <p>
+            This version uses a downloadable SVG map so that regions and campsite markers can work together.
+          </p>
+        </div>
+
+        <div class="map-stage panel">
+          <div class="map-wrapper" id="mapWrapper">
+            <div id="svgMapContainer" class="svg-map-container"></div>
+            <div id="markersLayer" class="markers-layer"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Detail Panel -->
+      <aside class="panel detail-panel">
+        <h2>Selected Information</h2>
+
+        <div class="detail-card">
+          <div class="detail-content">
+            <h3 id="detailTitle">Select a region or campsite</h3>
+
+            <div class="detail-section">
+              <h4>Region / Campsite Info</h4>
+              <ul class="detail-list" id="officialList">
+                <li>Click a region on the map or move over a campsite marker.</li>
+              </ul>
+            </div>
+
+            <div class="detail-section">
+              <h4>Project Note</h4>
+              <p id="projectNote">
+                This prototype explores how public natural places are organised through official data.
+              </p>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
