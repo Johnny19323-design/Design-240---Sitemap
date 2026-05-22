@@ -10,6 +10,7 @@ const resetBtn = document.getElementById("resetBtn");
 const detailTitle = document.getElementById("detailTitle");
 const officialList = document.getElementById("officialList");
 
+const mapWrapper = document.getElementById("mapWrapper");
 const mapContent = document.getElementById("mapContent");
 const zoomInBtn = document.getElementById("zoomInBtn");
 const zoomOutBtn = document.getElementById("zoomOutBtn");
@@ -21,14 +22,24 @@ let allRegionNames = [];
 
 let activeRegionName = null;
 let svgLoaded = false;
-let zoomLevel = 1;
 
 let minX = Infinity;
 let maxX = -Infinity;
 let minY = Infinity;
 let maxY = -Infinity;
 
-// marker mapping padding inside visible SVG area
+// zoom + pan
+let zoomLevel = 1;
+let panX = 0;
+let panY = 0;
+
+let isDragging = false;
+let dragStartX = 0;
+let dragStartY = 0;
+let startPanX = 0;
+let startPanY = 0;
+
+// marker padding inside visible SVG area
 const paddingLeft = 0.06;
 const paddingRight = 0.94;
 const paddingTop = 0.06;
@@ -41,6 +52,7 @@ async function init() {
   await loadCSVData();
   setupEvents();
   applyFilters();
+  updateMapTransform();
 }
 
 async function loadSVGMap() {
@@ -162,26 +174,78 @@ function setupEvents() {
 
   zoomInBtn.addEventListener("click", () => {
     zoomLevel = Math.min(zoomLevel + 0.2, 3);
-    applyZoom();
+    updateMapTransform();
   });
 
   zoomOutBtn.addEventListener("click", () => {
-    zoomLevel = Math.max(zoomLevel - 0.2, 0.8);
-    applyZoom();
+    zoomLevel = Math.max(zoomLevel - 0.2, 1);
+    if (zoomLevel === 1) {
+      panX = 0;
+      panY = 0;
+    }
+    updateMapTransform();
   });
 
   zoomResetBtn.addEventListener("click", () => {
     zoomLevel = 1;
-    applyZoom();
+    panX = 0;
+    panY = 0;
+    updateMapTransform();
   });
+
+  mapWrapper.addEventListener("mousedown", (event) => {
+    if (zoomLevel <= 1) return;
+
+    isDragging = true;
+    dragStartX = event.clientX;
+    dragStartY = event.clientY;
+    startPanX = panX;
+    startPanY = panY;
+
+    mapWrapper.classList.add("dragging");
+  });
+
+  window.addEventListener("mousemove", (event) => {
+    if (!isDragging) return;
+
+    const dx = event.clientX - dragStartX;
+    const dy = event.clientY - dragStartY;
+
+    panX = startPanX + dx;
+    panY = startPanY + dy;
+
+    updateMapTransform();
+  });
+
+  window.addEventListener("mouseup", () => {
+    isDragging = false;
+    mapWrapper.classList.remove("dragging");
+  });
+
+  mapWrapper.addEventListener("wheel", (event) => {
+    event.preventDefault();
+
+    if (event.deltaY < 0) {
+      zoomLevel = Math.min(zoomLevel + 0.1, 3);
+    } else {
+      zoomLevel = Math.max(zoomLevel - 0.1, 1);
+    }
+
+    if (zoomLevel === 1) {
+      panX = 0;
+      panY = 0;
+    }
+
+    updateMapTransform();
+  }, { passive: false });
 
   window.addEventListener("resize", () => {
     renderMarkers();
   });
 }
 
-function applyZoom() {
-  mapContent.style.transform = `scale(${zoomLevel})`;
+function updateMapTransform() {
+  mapContent.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
 }
 
 function applyFilters() {
@@ -280,7 +344,7 @@ function updateRegionPanel(regionId) {
     <li><strong>Selected Region:</strong> ${getFriendlyRegionName(regionId)}</li>
     <li><strong>Map interaction:</strong> region highlight only</li>
     <li><strong>Markers:</strong> remain visible unless filtered from the left panel</li>
-    <li><strong>Next step:</strong> connect official data and experience layers</li>
+    <li><strong>Navigation:</strong> zoom and drag enabled</li>
   `;
 }
 

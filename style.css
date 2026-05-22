@@ -160,6 +160,12 @@ body {
   min-height: 620px;
   margin: 0 auto;
   overflow: hidden;
+  cursor: grab;
+  user-select: none;
+}
+
+.map-wrapper.dragging {
+  cursor: grabbing;
 }
 
 .map-content {
@@ -167,7 +173,7 @@ body {
   width: 100%;
   height: 100%;
   transform-origin: center center;
-  transition: transform 0.2s ease;
+  transition: transform 0.12s ease;
 }
 
 .svg-map-container {
