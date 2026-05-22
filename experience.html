@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How Data Defines Nature — Experience View</title>
+  <link rel="stylesheet" href="experience.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <h1>How Data Defines Nature</h1>
+        <p>Experience View · Simulated place-based layer</p>
+      </div>
+
+      <div class="topbar-right">
+        <div class="mode-switch">
+          <button class="mode-btn">Official View</button>
+          <button class="mode-btn active">Experience View</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-layout">
+      <!-- Left Panel -->
+      <aside class="panel filters-panel">
+        <h2>Experience Filters</h2>
+
+        <div class="filter-group">
+          <label for="moodFilter">Mood / Feeling</label>
+          <select id="moodFilter">
+            <option>All</option>
+            <option>Quiet</option>
+            <option>Scenic</option>
+            <option>Crowded</option>
+            <option>Remote</option>
+            <option>Family Friendly</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="accessFilter">Travel Effort</label>
+          <select id="accessFilter">
+            <option>All</option>
+            <option>Easy access</option>
+            <option>Drive-in</option>
+            <option>Boat only</option>
+            <option>Walk-in</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="seasonFilter">Suggested Season</label>
+          <select id="seasonFilter">
+            <option>All</option>
+            <option>Summer</option>
+            <option>Autumn</option>
+            <option>Winter</option>
+            <option>Spring</option>
+          </select>
+        </div>
+
+        <div class="note-box">
+          <h3>Why this view?</h3>
+          <p>
+            This layer imagines campsites not just as official data points, but as places felt
+            through atmosphere, effort, memory, and personal experience.
+          </p>
+        </div>
+      </aside>
+
+      <!-- Center Map -->
+      <section class="map-panel">
+        <div class="map-header panel">
+          <h2>Experience Map</h2>
+          <p>
+            Instead of focusing only on official categories, this version highlights how campsites
+            might be felt and remembered through tags, stories, and atmosphere.
+          </p>
+        </div>
+
+        <div class="map-stage panel">
+          <div class="map-wrapper">
+            <img src="nz-map.png" alt="New Zealand map" class="map-image" />
+
+            <!-- Fake experience markers -->
+            <button class="exp-marker scenic" style="left: 58%; top: 33%;" data-site="Lake Rotoiti">
+              <span></span>
+            </button>
+
+            <button class="exp-marker remote" style="left: 49%; top: 77%;" data-site="Mavora Lakes">
+              <span></span>
+            </button>
+
+            <button class="exp-marker crowded" style="left: 46%; top: 81%;" data-site="Routeburn Flats">
+              <span></span>
+            </button>
+
+            <button class="exp-marker family" style="left: 55%; top: 39%;" data-site="Pelorus Bridge">
+              <span></span>
+            </button>
+
+            <button class="exp-marker scenic" style="left: 63%; top: 45%;" data-site="Mistletoe Bay">
+              <span></span>
+            </button>
+
+            <div class="map-legend">
+              <div><span class="legend-dot scenic"></span> Scenic</div>
+              <div><span class="legend-dot remote"></span> Remote</div>
+              <div><span class="legend-dot crowded"></span> Busy / Popular</div>
+              <div><span class="legend-dot family"></span> Family Friendly</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Panel -->
+      <aside class="panel detail-panel">
+        <h2>Selected Experience</h2>
+
+        <div class="experience-card">
+          <div class="experience-image-wrap">
+            <img
+              id="experienceImage"
+              src="camp-placeholder.jpg"
+              alt="Experience preview"
+              class="experience-image"
+            />
+          </div>
+
+          <div class="experience-content">
+            <h3 id="experienceTitle">Lake Rotoiti Campsite</h3>
+
+            <div class="experience-section">
+              <h4>Atmosphere</h4>
+              <p id="experienceText">
+                A calm lakeside stop that feels slower and quieter than the official data suggests.
+                The place is experienced through still water, soft light, and the sense of being held
+                by the surrounding landscape.
+              </p>
+            </div>
+
+            <div class="experience-section">
+              <h4>Experience Tags</h4>
+              <div class="tags" id="experienceTags">
+                <span class="tag">quiet</span>
+                <span class="tag">scenic</span>
+                <span class="tag">easy access</span>
+                <span class="tag">family friendly</span>
+              </div>
+            </div>
+
+            <div class="experience-section">
+              <h4>Visitor Note</h4>
+              <blockquote id="experienceQuote">
+                “It didn’t just feel like a campsite. It felt like a pause in the journey.”
+              </blockquote>
+            </div>
+
+            <div class="experience-section">
+              <h4>Reflection</h4>
+              <p id="experienceReflection">
+                In official data this campsite is described through access, facilities, and category.
+                In lived experience it becomes a place defined by pace, atmosphere, and memory.
+              </p>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <script src="experience.js"></script>
+</body>
+</html>
