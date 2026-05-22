@@ -12,20 +12,20 @@
     <header class="topbar">
       <div class="brand">
         <h1>How Data Defines Nature</h1>
-        <p>DOC Campsites · Official dataset prototype</p>
+        <p id="topbarSubtitle">DOC Campsites · Official dataset prototype</p>
       </div>
 
       <div class="topbar-right">
         <div class="mode-switch">
-          <button class="mode-btn active">Official View</button>
-          <button class="mode-btn">Experience View</button>
+          <button class="mode-btn active" data-mode="official">Official View</button>
+          <button class="mode-btn" data-mode="experience">Experience View</button>
         </div>
       </div>
     </header>
 
     <main class="main-layout">
       <aside class="panel filters-panel">
-        <h2>Filters</h2>
+        <h2 id="filtersTitle">Filters</h2>
 
         <div class="filter-group">
           <label for="regionFilter">Region</label>
@@ -42,12 +42,20 @@
         </div>
 
         <button class="reset-btn" id="resetBtn">Reset Filters</button>
+
+        <div class="experience-note" id="experienceNote">
+          <h3>Experience Layer</h3>
+          <p>
+            This simulated layer imagines how campsites might be felt through atmosphere, effort,
+            memory, and use, rather than only through official management categories.
+          </p>
+        </div>
       </aside>
 
       <section class="map-panel">
         <div class="map-header panel">
-          <h2>Interactive Campsite Map</h2>
-          <p>
+          <h2 id="mapTitle">Interactive Campsite Map</h2>
+          <p id="mapDescription">
             This version uses a downloadable SVG map so that regions and campsite markers can work together.
           </p>
         </div>
@@ -69,24 +77,39 @@
       </section>
 
       <aside class="panel detail-panel">
-        <h2>Selected Information</h2>
+        <h2 id="detailPanelTitle">Selected Information</h2>
 
         <div class="detail-card">
           <div class="detail-content">
             <h3 id="detailTitle">Select a region or campsite</h3>
 
             <div class="detail-section">
-              <h4>Region / Campsite Info</h4>
+              <h4 id="sectionHeading">Region / Campsite Info</h4>
               <ul class="detail-list" id="officialList">
                 <li>Click a region on the map or hover over a campsite marker.</li>
               </ul>
             </div>
 
             <div class="detail-section">
-              <h4>Project Note</h4>
+              <h4 id="secondaryHeading">Project Note</h4>
               <p id="projectNote">
                 This prototype explores how public natural places are organised through official data.
               </p>
+            </div>
+
+            <div class="detail-section experience-only" id="experienceTagsSection">
+              <h4>Experience Tags</h4>
+              <div class="tags" id="experienceTags">
+                <span class="tag">quiet</span>
+                <span class="tag">scenic</span>
+              </div>
+            </div>
+
+            <div class="detail-section experience-only" id="experienceQuoteSection">
+              <h4>Visitor Note</h4>
+              <blockquote id="experienceQuote">
+                “This place felt slower and quieter than the official information suggested.”
+              </blockquote>
             </div>
           </div>
         </div>
