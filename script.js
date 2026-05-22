@@ -9,6 +9,16 @@ const resetBtn = document.getElementById("resetBtn");
 
 const detailTitle = document.getElementById("detailTitle");
 const officialList = document.getElementById("officialList");
+const projectNote = document.getElementById("projectNote");
+const topbarSubtitle = document.getElementById("topbarSubtitle");
+const mapTitle = document.getElementById("mapTitle");
+const mapDescription = document.getElementById("mapDescription");
+const detailPanelTitle = document.getElementById("detailPanelTitle");
+const sectionHeading = document.getElementById("sectionHeading");
+const secondaryHeading = document.getElementById("secondaryHeading");
+
+const experienceTags = document.getElementById("experienceTags");
+const experienceQuote = document.getElementById("experienceQuote");
 
 const mapWrapper = document.getElementById("mapWrapper");
 const mapContent = document.getElementById("mapContent");
@@ -16,12 +26,15 @@ const zoomInBtn = document.getElementById("zoomInBtn");
 const zoomOutBtn = document.getElementById("zoomOutBtn");
 const zoomResetBtn = document.getElementById("zoomResetBtn");
 
+const modeButtons = document.querySelectorAll(".mode-btn");
+
 let allSites = [];
 let filteredSites = [];
 let allRegionNames = [];
 
 let activeRegionName = null;
 let svgLoaded = false;
+let currentMode = "official";
 
 let minX = Infinity;
 let maxX = -Infinity;
@@ -45,6 +58,30 @@ const paddingRight = 0.94;
 const paddingTop = 0.06;
 const paddingBottom = 0.94;
 
+// fake experience layer
+const experienceData = {
+  "Lake Rotoiti Campsite": {
+    text: "A calm lakeside stop that feels slower and quieter than the official data suggests. The place is experienced through stillness, reflection, and soft landscape edges.",
+    tags: ["quiet", "scenic", "easy access", "family friendly"],
+    quote: "It felt more like a pause than a destination."
+  },
+  "Mavora Lakes Campsite": {
+    text: "A wide open site that feels remote and exposed. The effort of getting there becomes part of the place itself.",
+    tags: ["remote", "open landscape", "quiet", "long drive"],
+    quote: "The remoteness arrived before I did."
+  },
+  "Routeburn Flats Campsite": {
+    text: "This place is shaped by movement, anticipation, and the shared rhythm of the track. It feels active and collective.",
+    tags: ["busy", "iconic", "track-based", "high demand"],
+    quote: "It felt like part of a journey, not just a stop."
+  },
+  "Pelorus Bridge Campsite": {
+    text: "The site feels structured and accessible, with a more family-oriented atmosphere than the official data alone can show.",
+    tags: ["family friendly", "accessible", "comfortable", "serviced"],
+    quote: "Nature felt organised here, but still welcoming."
+  }
+};
+
 init();
 
 async function init() {
@@ -53,6 +90,7 @@ async function init() {
   setupEvents();
   applyFilters();
   updateMapTransform();
+  updateModeUI();
 }
 
 async function loadSVGMap() {
@@ -242,6 +280,43 @@ function setupEvents() {
   window.addEventListener("resize", () => {
     renderMarkers();
   });
+
+  modeButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      modeButtons.forEach((btn) => btn.classList.remove("active"));
+      button.classList.add("active");
+      currentMode = button.dataset.mode;
+      updateModeUI();
+      renderMarkers();
+      clearDetailPanel();
+    });
+  });
+}
+
+function updateModeUI() {
+  document.body.classList.toggle("experience-mode", currentMode === "experience");
+
+  if (currentMode === "official") {
+    topbarSubtitle.textContent = "DOC Campsites · Official dataset prototype";
+    mapTitle.textContent = "Interactive Campsite Map";
+    mapDescription.textContent =
+      "This version uses a downloadable SVG map so that regions and campsite markers can work together.";
+    detailPanelTitle.textContent = "Selected Information";
+    sectionHeading.textContent = "Region / Campsite Info";
+    secondaryHeading.textContent = "Project Note";
+    projectNote.textContent =
+      "This prototype explores how public natural places are organised through official data.";
+  } else {
+    topbarSubtitle.textContent = "Experience View · Simulated place-based layer";
+    mapTitle.textContent = "Experience Map";
+    mapDescription.textContent =
+      "This layer imagines campsites through atmosphere, effort, memory, and use rather than only through official categories.";
+    detailPanelTitle.textContent = "Selected Experience";
+    sectionHeading.textContent = "Experience Description";
+    secondaryHeading.textContent = "Reflection";
+    projectNote.textContent =
+      "This simulated layer contrasts official data with how places might be felt and remembered.";
+  }
 }
 
 function updateMapTransform() {
@@ -284,7 +359,7 @@ function renderMarkers() {
 
   filteredSites.forEach((site) => {
     const marker = document.createElement("div");
-    marker.className = `marker ${getCategoryClass(site.category)}`;
+    marker.className = `marker ${currentMode} ${getCategoryClass(site.category)}`;
 
     const relativeX = mapValue(site.x2, minX, maxX, paddingLeft, paddingRight);
     const relativeY = mapValue(site.y2, maxY, minY, paddingTop, paddingBottom);
@@ -295,20 +370,31 @@ function renderMarkers() {
     marker.style.left = `${px}px`;
     marker.style.top = `${py}px`;
 
-    const size = clamp(mapValue(site.unpoweredSites, 0, 300, 5, 10), 5, 10);
+    const size = currentMode === "official"
+      ? clamp(mapValue(site.unpoweredSites, 0, 300, 5, 10), 5, 10)
+      : clamp(mapValue(site.unpoweredSites, 0, 300, 8, 14), 8, 14);
+
     marker.style.width = `${size}px`;
     marker.style.height = `${size}px`;
 
     marker.addEventListener("mouseenter", () => {
-      updateCampsitePanel(site);
+      updateDetailForMode(site);
     });
 
     marker.addEventListener("click", () => {
-      updateCampsitePanel(site);
+      updateDetailForMode(site);
     });
 
     markersLayer.appendChild(marker);
   });
+}
+
+function updateDetailForMode(site) {
+  if (currentMode === "official") {
+    updateCampsitePanel(site);
+  } else {
+    updateExperiencePanel(site);
+  }
 }
 
 function highlightActiveRegion() {
@@ -337,6 +423,37 @@ function updateCampsitePanel(site) {
   `;
 }
 
+function updateExperiencePanel(site) {
+  const exp = experienceData[site.siteName] || buildFallbackExperience(site);
+
+  detailTitle.textContent = site.siteName;
+
+  officialList.innerHTML = `
+    <li>${exp.text}</li>
+  `;
+
+  projectNote.textContent = exp.reflection;
+
+  experienceTags.innerHTML = "";
+  exp.tags.forEach((tag) => {
+    const span = document.createElement("span");
+    span.className = "tag";
+    span.textContent = tag;
+    experienceTags.appendChild(span);
+  });
+
+  experienceQuote.textContent = `“${exp.quote}”`;
+}
+
+function buildFallbackExperience(site) {
+  return {
+    text: `This campsite may be experienced differently from how it appears in official data. Access, atmosphere, weather, and memory can all shape how the place is felt.`,
+    reflection: `Official data describes ${site.siteName} through category, access, and facilities. An experience layer invites viewers to think about how the place might be lived rather than only managed.`,
+    tags: ["scenic", "situated", "place-based"],
+    quote: "The data describes the site, but not the feeling of being there."
+  };
+}
+
 function updateRegionPanel(regionId) {
   detailTitle.textContent = getFriendlyRegionName(regionId);
 
@@ -350,9 +467,27 @@ function updateRegionPanel(regionId) {
 
 function clearDetailPanel() {
   detailTitle.textContent = "Select a region or campsite";
-  officialList.innerHTML = `
-    <li>Click a region on the map or hover over a campsite marker.</li>
-  `;
+
+  if (currentMode === "official") {
+    officialList.innerHTML = `
+      <li>Click a region on the map or hover over a campsite marker.</li>
+    `;
+    projectNote.textContent =
+      "This prototype explores how public natural places are organised through official data.";
+  } else {
+    officialList.innerHTML = `
+      <li>Hover over a campsite marker to see a simulated place-based description.</li>
+    `;
+    projectNote.textContent =
+      "This simulated layer contrasts official data with how places might be felt and remembered.";
+
+    experienceTags.innerHTML = `
+      <span class="tag">quiet</span>
+      <span class="tag">scenic</span>
+    `;
+    experienceQuote.textContent =
+      "“This place felt slower and quieter than the official information suggested.”";
+  }
 }
 
 function getFriendlyRegionName(regionId) {
