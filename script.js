@@ -12,6 +12,9 @@ const resetBtn = document.getElementById("resetBtn");
 const detailTitle = document.getElementById("detailTitle");
 const detailList = document.getElementById("detailList");
 
+const routeTitle = document.getElementById("routeTitle");
+const routeInfoList = document.getElementById("routeInfoList");
+
 const mapWrapper = document.getElementById("mapWrapper");
 const mapContent = document.getElementById("mapContent");
 const zoomInBtn = document.getElementById("zoomInBtn");
@@ -42,6 +45,65 @@ const paddingRight = 0.88;
 const paddingTop = 0.08;
 const paddingBottom = 0.92;
 
+const routeMeta = {
+  "Nelson Lakes Weekend Camp": {
+    primaryType: "camping",
+    score: 88,
+    start: "Kerr Bay Campsite",
+    end: "Lake Rotoroa Campsite",
+    summary: "A scenic camping-focused route through the Nelson Lakes area, suitable for relaxed weekend travel."
+  },
+  "Marlborough Sounds Camp Route": {
+    primaryType: "camping",
+    score: 84,
+    start: "Momorangi Campsite",
+    end: "Schoolhouse Bay Campsite",
+    summary: "A coastal camping route with access to bays, views, and short outdoor stops around Marlborough Sounds."
+  },
+  "Canterbury Easy Camp Route": {
+    primaryType: "camping",
+    score: 80,
+    start: "Lake Middleton Campsite",
+    end: "Ahuriri Bridge Campsite",
+    summary: "An easy-access camping route designed for shorter and simpler outdoor trips."
+  },
+  "Abel Tasman Coastal Walk": {
+    primaryType: "hiking",
+    score: 92,
+    start: "Tōtaranui Campground",
+    end: "Awaroa Campsite",
+    summary: "A hiking-focused coastal route based on Great Walk-style movement through Abel Tasman."
+  },
+  "Nelson Lakes Hiking Escape": {
+    primaryType: "hiking",
+    score: 85,
+    start: "Kerr Bay Campsite",
+    end: "West Bay Campsite - Buller Zone",
+    summary: "A hiking-oriented route in the Nelson Lakes area with strong lake and forest scenery."
+  },
+  "Canterbury Short Walk Route": {
+    primaryType: "hiking",
+    score: 78,
+    start: "Lake Poaka Campsite",
+    end: "Lake Middleton Campsite",
+    summary: "A short walking route suited to users looking for manageable outdoor movement over a short time frame."
+  },
+  "Marlborough Sounds Water Route": {
+    primaryType: "water-based",
+    score: 87,
+    start: "Momorangi Campsite",
+    end: "Camp Bay Campsite",
+    summary: "A water-based route focused on boating, fishing, and coastal access around the Marlborough Sounds."
+  },
+  "Nelson Lakes Lake Activity Route": {
+    primaryType: "water-based",
+    score: 86,
+    start: "West Bay Campsite - Jetty Zone",
+    end: "Lake Rotoroa Campsite",
+    summary: "A lake-based route organised around water access, boating, and relaxed lakeside activity."
+  }
+};
+
 init();
 
 async function init() {
@@ -71,7 +133,7 @@ function prepareSVGRegions() {
   svg.removeAttribute("width");
   svg.removeAttribute("height");
 
-  const regionShapes = svg.querySelectorAll("path[id], polygon[id]");
+  const regionShapes = svgMapContainer.querySelectorAll("path[id], polygon[id]");
   regionShapes.forEach((shape) => {
     shape.classList.add("region-shape");
   });
@@ -123,8 +185,8 @@ async function loadCSVData() {
 }
 
 function populateFilters() {
-  const routeGroups = [...new Set(allSites.map(site => site.routeGroups).filter(Boolean))].sort();
-  const routeTypes = [...new Set(allSites.map(site => site.routeTypeFocus).filter(Boolean))].sort();
+  const routeGroups = Object.keys(routeMeta);
+  const routeTypes = ["Camping", "Hiking", "Water-based"];
 
   fillSelect(routeGroupFilter, routeGroups);
   fillSelect(routeTypeFilter, routeTypes);
@@ -198,26 +260,22 @@ function setupEvents() {
     mapWrapper.classList.remove("dragging");
   });
 
-  mapWrapper.addEventListener(
-    "wheel",
-    (event) => {
-      event.preventDefault();
+  mapWrapper.addEventListener("wheel", (event) => {
+    event.preventDefault();
 
-      if (event.deltaY < 0) {
-        zoomLevel = Math.min(zoomLevel + 0.1, 3);
-      } else {
-        zoomLevel = Math.max(zoomLevel - 0.1, 1);
-      }
+    if (event.deltaY < 0) {
+      zoomLevel = Math.min(zoomLevel + 0.1, 3);
+    } else {
+      zoomLevel = Math.max(zoomLevel - 0.1, 1);
+    }
 
-      if (zoomLevel === 1) {
-        panX = 0;
-        panY = 0;
-      }
+    if (zoomLevel === 1) {
+      panX = 0;
+      panY = 0;
+    }
 
-      updateMapTransform();
-    },
-    { passive: false }
-  );
+    updateMapTransform();
+  }, { passive: false });
 
   window.addEventListener("resize", () => {
     renderMarkers();
@@ -235,14 +293,17 @@ function updateMapTransform() {
 function applyFilters() {
   filteredSites = allSites.filter((site) => {
     const routeGroupMatch =
-      routeGroupFilter.value === "all" || site.routeGroups === routeGroupFilter.value;
+      routeGroupFilter.value === "all" || site.routeGroups.includes(routeGroupFilter.value);
 
+    const selectedType = routeTypeFilter.value.toLowerCase();
     const routeTypeMatch =
-      routeTypeFilter.value === "all" || site.routeTypeFocus === routeTypeFilter.value;
+      routeTypeFilter.value === "all" ||
+      getPrimaryTypeFromRoutes(site.routeGroups) === selectedType;
 
     return routeGroupMatch && routeTypeMatch;
   });
 
+  updateRoutePanel();
   clearDetailPanel();
   renderMarkers();
 }
@@ -281,14 +342,10 @@ function renderMarkers() {
 
   projected.forEach((site) => {
     const marker = document.createElement("div");
-    marker.className = `marker ${getRouteTypeClass(site.routeTypeFocus)}`;
+    marker.className = `marker ${getMarkerClass(site.routeGroups)}`;
 
     marker.style.left = `${site.px}px`;
     marker.style.top = `${site.py}px`;
-
-    const size = clamp(mapValue(site.unpoweredSites, 0, 300, 8, 13), 8, 13);
-    marker.style.width = `${size}px`;
-    marker.style.height = `${size}px`;
 
     marker.addEventListener("mouseenter", () => {
       updateCampsitePanel(site);
@@ -303,7 +360,7 @@ function renderMarkers() {
 }
 
 function spreadOverlappingPoints(points) {
-  const threshold = 16;
+  const threshold = 18;
   const groups = [];
 
   points.forEach((point) => {
@@ -340,7 +397,7 @@ function spreadOverlappingPoints(points) {
       return;
     }
 
-    const radius = 10;
+    const radius = 12;
     group.points.forEach((point, index) => {
       const angle = (Math.PI * 2 * index) / group.points.length;
       result.push({
@@ -359,7 +416,7 @@ function drawRouteLines(points) {
   if (selectedRouteGroup === "all") return;
 
   const routePoints = points
-    .filter((p) => p.routeGroups === selectedRouteGroup)
+    .filter((p) => p.routeGroups.includes(selectedRouteGroup))
     .sort((a, b) => a.y2 - b.y2);
 
   if (routePoints.length < 2) return;
@@ -372,6 +429,34 @@ function drawRouteLines(points) {
   path.setAttribute("d", pathData);
   path.setAttribute("class", "route-line");
   routesLayer.appendChild(path);
+}
+
+function updateRoutePanel() {
+  const selectedRoute = routeGroupFilter.value;
+
+  if (selectedRoute === "all") {
+    routeTitle.textContent = "No route selected";
+    routeInfoList.innerHTML = `
+      <li>Choose a route group from the filters to view route details.</li>
+    `;
+    return;
+  }
+
+  const meta = routeMeta[selectedRoute];
+  if (!meta) return;
+
+  const sitesInRoute = allSites.filter(site => site.routeGroups.includes(selectedRoute));
+  const siteNames = sitesInRoute.map(site => site.siteName);
+
+  routeTitle.textContent = selectedRoute;
+  routeInfoList.innerHTML = `
+    <li><strong>Primary Type:</strong> ${formatPrimaryType(meta.primaryType)}</li>
+    <li><strong>Start:</strong> ${meta.start}</li>
+    <li><strong>End:</strong> ${meta.end}</li>
+    <li><strong>Recommendation Score:</strong> ${meta.score}</li>
+    <li><strong>Summary:</strong> ${meta.summary}</li>
+    <li><strong>Campsites in Route:</strong> ${siteNames.join(", ")}</li>
+  `;
 }
 
 function updateCampsitePanel(site) {
@@ -405,20 +490,33 @@ function clearDetailPanel() {
   `;
 }
 
-function getRouteTypeClass(routeType) {
-  const value = String(routeType).toLowerCase();
+function getPrimaryTypeFromRoutes(routeGroupsText) {
+  const routeNames = routeGroupsText.split("|").map(r => r.trim());
 
-  if (value.includes("camping")) return "camping";
-  if (value.includes("hiking")) return "hiking";
-  if (value.includes("water")) return "water-based";
+  for (const routeName of routeNames) {
+    if (routeMeta[routeName]) {
+      return routeMeta[routeName].primaryType;
+    }
+  }
 
+  return "default";
+}
+
+function getMarkerClass(routeGroupsText) {
+  const primary = getPrimaryTypeFromRoutes(routeGroupsText);
+  if (primary === "camping") return "camping";
+  if (primary === "hiking") return "hiking";
+  if (primary === "water-based") return "water-based";
   return "default-route";
+}
+
+function formatPrimaryType(type) {
+  if (type === "camping") return "Camping";
+  if (type === "hiking") return "Hiking";
+  if (type === "water-based") return "Water-based";
+  return type;
 }
 
 function mapValue(value, start1, stop1, start2, stop2) {
   return start2 + (stop2 - start2) * ((value - start1) / (stop1 - start1));
-}
-
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
 }

@@ -59,7 +59,8 @@ body {
 }
 
 .filters-panel h2,
-.detail-panel h2 {
+.detail-panel h2,
+.route-info-panel h2 {
   font-size: 1.1rem;
   margin-bottom: 18px;
 }
@@ -141,7 +142,6 @@ body {
 
 .legend-hiking {
   background: #5b7fd7;
-  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
 }
 
 .legend-water {
@@ -151,21 +151,10 @@ body {
 
 .map-panel {
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: minmax(420px, 1fr) 220px;
   gap: 16px;
   min-height: 0;
   overflow: hidden;
-}
-
-.map-header h2 {
-  font-size: 1.2rem;
-  margin-bottom: 6px;
-}
-
-.map-header p {
-  font-size: 0.94rem;
-  color: #666;
-  line-height: 1.45;
 }
 
 .map-stage {
@@ -236,7 +225,6 @@ body {
   width: 100%;
   height: 100%;
   pointer-events: none;
-  overflow: visible;
 }
 
 .route-line {
@@ -256,31 +244,62 @@ body {
 
 .marker {
   position: absolute;
-  transform: translate(-50%, -50%);
-  border: 2px solid rgba(255,255,255,0.98);
-  box-shadow: 0 0 0 4px rgba(0,0,0,0.05);
   pointer-events: auto;
   transition: transform 0.12s ease;
 }
 
 .marker:hover {
-  transform: translate(-50%, -50%) scale(1.18);
-  z-index: 5;
+  z-index: 10;
 }
 
 .marker.camping {
+  width: 14px;
+  height: 14px;
   background: #63b35d;
+  border: 2px solid rgba(255,255,255,0.98);
   border-radius: 50%;
+  box-shadow: 0 0 0 4px rgba(0,0,0,0.05);
+  transform: translate(-50%, -50%);
+}
+
+.marker.camping:hover {
+  transform: translate(-50%, -50%) scale(1.18);
 }
 
 .marker.hiking {
-  background: #5b7fd7;
-  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 14px solid #5b7fd7;
+  transform: translate(-50%, -75%);
+  filter: drop-shadow(0 0 0 rgba(255,255,255,0.98))
+          drop-shadow(0 0 3px rgba(0,0,0,0.08));
+}
+
+.marker.hiking::after {
+  content: "";
+  position: absolute;
+  left: -6px;
+  top: 3px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 10px solid #5b7fd7;
+}
+
+.marker.hiking:hover {
+  transform: translate(-50%, -75%) scale(1.12);
 }
 
 .marker.water-based {
+  width: 14px;
+  height: 14px;
   background: #e4a83f;
+  border: 2px solid rgba(255,255,255,0.98);
   transform: translate(-50%, -50%) rotate(45deg);
+  box-shadow: 0 0 0 4px rgba(0,0,0,0.05);
 }
 
 .marker.water-based:hover {
@@ -288,8 +307,13 @@ body {
 }
 
 .marker.default-route {
+  width: 14px;
+  height: 14px;
   background: #9a9a9a;
+  border: 2px solid rgba(255,255,255,0.98);
   border-radius: 50%;
+  box-shadow: 0 0 0 4px rgba(0,0,0,0.05);
+  transform: translate(-50%, -50%);
 }
 
 .region-shape {
@@ -300,18 +324,21 @@ body {
   cursor: default;
 }
 
-.detail-card {
+.detail-card,
+.route-info-card {
   border: 1px solid #e2e2e2;
   border-radius: 18px;
   overflow: hidden;
   background: #fafafa;
 }
 
-.detail-content {
+.detail-content,
+.route-info-card {
   padding: 18px;
 }
 
-.detail-content h3 {
+.detail-content h3,
+.route-info-card h3 {
   font-size: 1.1rem;
   margin-bottom: 12px;
 }
@@ -328,7 +355,8 @@ body {
   margin-bottom: 8px;
 }
 
-.detail-list {
+.detail-list,
+.route-info-list {
   list-style: none;
   display: flex;
   flex-direction: column;
@@ -336,7 +364,8 @@ body {
 }
 
 .detail-list li,
-.detail-section p {
+.detail-section p,
+.route-info-list li {
   font-size: 0.94rem;
   line-height: 1.55;
   color: #333;
@@ -369,10 +398,6 @@ body {
   }
 
   .map-panel {
-    min-height: 680px;
-  }
-
-  .map-stage {
-    min-height: 560px;
+    grid-template-rows: 520px 220px;
   }
 }

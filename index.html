@@ -17,6 +17,7 @@
     </header>
 
     <main class="main-layout">
+      <!-- LEFT -->
       <aside class="panel filters-panel">
         <h2>Filters</h2>
 
@@ -45,14 +46,17 @@
 
         <div class="legend-box">
           <h3>Marker Legend</h3>
+
           <div class="legend-item">
             <span class="legend-shape legend-camping"></span>
             <span>Camping</span>
           </div>
+
           <div class="legend-item">
             <span class="legend-shape legend-hiking"></span>
             <span>Hiking</span>
           </div>
+
           <div class="legend-item">
             <span class="legend-shape legend-water"></span>
             <span>Water-based</span>
@@ -60,14 +64,8 @@
         </div>
       </aside>
 
+      <!-- MIDDLE -->
       <section class="map-panel">
-        <div class="map-header panel">
-          <h2>Interactive Route Map</h2>
-          <p>
-            Hover over or click a campsite marker to inspect how it contributes to a curated route group. When a route group is selected, the campsites are connected as a route.
-          </p>
-        </div>
-
         <div class="map-stage panel">
           <div class="map-toolbar">
             <button id="zoomInBtn">+</button>
@@ -83,8 +81,19 @@
             </div>
           </div>
         </div>
+
+        <div class="route-info-panel panel">
+          <h2>Selected Route</h2>
+          <div class="route-info-card">
+            <h3 id="routeTitle">No route selected</h3>
+            <ul class="route-info-list" id="routeInfoList">
+              <li>Choose a route group from the filters to view route details.</li>
+            </ul>
+          </div>
+        </div>
       </section>
 
+      <!-- RIGHT -->
       <aside class="panel detail-panel">
         <h2>Selected Campsite</h2>
 
