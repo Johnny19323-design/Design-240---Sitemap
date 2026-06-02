@@ -24,10 +24,11 @@ let filteredSites = [];
 let activeRegionName = null;
 let svgLoaded = false;
 
-let minX = Infinity;
-let maxX = -Infinity;
-let minY = Infinity;
-let maxY = -Infinity;
+// fixed NZTM bounds for the full NZ map
+const minX = 1080000;
+const maxX = 2120000;
+const minY = 4720000;
+const maxY = 6230000;
 
 // zoom + pan
 let zoomLevel = 1;
@@ -41,10 +42,10 @@ let startPanX = 0;
 let startPanY = 0;
 
 // marker padding inside visible SVG area
-const paddingLeft = 0.06;
-const paddingRight = 0.94;
-const paddingTop = 0.06;
-const paddingBottom = 0.94;
+const paddingLeft = 0.12;
+const paddingRight = 0.88;
+const paddingTop = 0.08;
+const paddingBottom = 0.92;
 
 init();
 
@@ -108,11 +109,6 @@ async function loadCSVData() {
 
             if (isNaN(x2) || isNaN(y2)) return null;
 
-            minX = Math.min(minX, x2);
-            maxX = Math.max(maxX, x2);
-            minY = Math.min(minY, y2);
-            maxY = Math.max(maxY, y2);
-
             return {
               siteName: row["Name of site"] || "Unknown site",
               clusterGroup: row["cluster_group"] || "Unknown cluster",
@@ -137,6 +133,9 @@ async function loadCSVData() {
             };
           })
           .filter(Boolean);
+
+        console.log("CSV file:", csvFile);
+        console.log("Loaded sites:", allSites.length);
 
         populateFilters();
         resolve();
@@ -317,7 +316,7 @@ function renderMarkers() {
     marker.style.left = `${px}px`;
     marker.style.top = `${py}px`;
 
-    const size = clamp(mapValue(site.unpoweredSites, 0, 300, 6, 12), 6, 12);
+    const size = clamp(mapValue(site.unpoweredSites, 0, 300, 5, 9), 5, 9);
     marker.style.width = `${size}px`;
     marker.style.height = `${size}px`;
 
