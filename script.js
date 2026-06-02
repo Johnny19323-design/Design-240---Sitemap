@@ -3,6 +3,7 @@ const svgFile = "nz-admins.svg";
 
 const svgMapContainer = document.getElementById("svgMapContainer");
 const markersLayer = document.getElementById("markersLayer");
+const routesLayer = document.getElementById("routesLayer");
 
 const routeGroupFilter = document.getElementById("routeGroupFilter");
 const routeTypeFilter = document.getElementById("routeTypeFilter");
@@ -21,10 +22,10 @@ let allSites = [];
 let filteredSites = [];
 let svgLoaded = false;
 
-let mapMinX = Infinity;
-let mapMaxX = -Infinity;
-let mapMinY = Infinity;
-let mapMaxY = -Infinity;
+const nzMinX = 1080000;
+const nzMaxX = 2120000;
+const nzMinY = 4720000;
+const nzMaxY = 6230000;
 
 let zoomLevel = 1;
 let panX = 0;
@@ -36,10 +37,10 @@ let dragStartY = 0;
 let startPanX = 0;
 let startPanY = 0;
 
-const paddingLeft = 0.18;
-const paddingRight = 0.82;
-const paddingTop = 0.12;
-const paddingBottom = 0.88;
+const paddingLeft = 0.12;
+const paddingRight = 0.88;
+const paddingTop = 0.08;
+const paddingBottom = 0.92;
 
 init();
 
@@ -90,11 +91,6 @@ async function loadCSVData() {
             const unpowered = Number(row["Number of unpowered sites"]);
 
             if (isNaN(x2) || isNaN(y2)) return null;
-
-            mapMinX = Math.min(mapMinX, x2);
-            mapMaxX = Math.max(mapMaxX, x2);
-            mapMinY = Math.min(mapMinY, y2);
-            mapMaxY = Math.max(mapMaxY, y2);
 
             return {
               siteName: row["Name of site"] || "Unknown site",
@@ -180,7 +176,6 @@ function setupEvents() {
 
   mapWrapper.addEventListener("mousedown", (event) => {
     if (zoomLevel <= 1) return;
-
     isDragging = true;
     dragStartX = event.clientX;
     dragStartY = event.clientY;
@@ -191,13 +186,10 @@ function setupEvents() {
 
   window.addEventListener("mousemove", (event) => {
     if (!isDragging) return;
-
     const dx = event.clientX - dragStartX;
     const dy = event.clientY - dragStartY;
-
     panX = startPanX + dx;
     panY = startPanY + dy;
-
     updateMapTransform();
   });
 
@@ -257,6 +249,7 @@ function applyFilters() {
 
 function renderMarkers() {
   markersLayer.innerHTML = "";
+  routesLayer.innerHTML = "";
 
   if (!svgLoaded) return;
 
@@ -271,20 +264,29 @@ function renderMarkers() {
   const svgWidth = svgRect.width;
   const svgHeight = svgRect.height;
 
-  filteredSites.forEach((site) => {
+  let projected = filteredSites.map((site) => {
+    const relativeX = mapValue(site.x2, nzMinX, nzMaxX, paddingLeft, paddingRight);
+    const relativeY = mapValue(site.y2, nzMaxY, nzMinY, paddingTop, paddingBottom);
+
+    return {
+      ...site,
+      px: svgLeft + svgWidth * relativeX,
+      py: svgTop + svgHeight * relativeY
+    };
+  });
+
+  projected = spreadOverlappingPoints(projected);
+
+  drawRouteLines(projected);
+
+  projected.forEach((site) => {
     const marker = document.createElement("div");
-    marker.className = `marker ${getCategoryClass(site.category)}`;
+    marker.className = `marker ${getRouteTypeClass(site.routeTypeFocus)}`;
 
-    const relativeX = mapValue(site.x2, mapMinX, mapMaxX, paddingLeft, paddingRight);
-    const relativeY = mapValue(site.y2, mapMaxY, mapMinY, paddingTop, paddingBottom);
+    marker.style.left = `${site.px}px`;
+    marker.style.top = `${site.py}px`;
 
-    const px = svgLeft + svgWidth * relativeX;
-    const py = svgTop + svgHeight * relativeY;
-
-    marker.style.left = `${px}px`;
-    marker.style.top = `${py}px`;
-
-    const size = clamp(mapValue(site.unpoweredSites, 0, 300, 5, 9), 5, 9);
+    const size = clamp(mapValue(site.unpoweredSites, 0, 300, 8, 13), 8, 13);
     marker.style.width = `${size}px`;
     marker.style.height = `${size}px`;
 
@@ -298,6 +300,78 @@ function renderMarkers() {
 
     markersLayer.appendChild(marker);
   });
+}
+
+function spreadOverlappingPoints(points) {
+  const threshold = 16;
+  const groups = [];
+
+  points.forEach((point) => {
+    let placed = false;
+
+    for (const group of groups) {
+      const dx = point.px - group.cx;
+      const dy = point.py - group.cy;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < threshold) {
+        group.points.push(point);
+        group.cx = group.points.reduce((sum, p) => sum + p.px, 0) / group.points.length;
+        group.cy = group.points.reduce((sum, p) => sum + p.py, 0) / group.points.length;
+        placed = true;
+        break;
+      }
+    }
+
+    if (!placed) {
+      groups.push({
+        cx: point.px,
+        cy: point.py,
+        points: [point]
+      });
+    }
+  });
+
+  const result = [];
+
+  groups.forEach((group) => {
+    if (group.points.length === 1) {
+      result.push(group.points[0]);
+      return;
+    }
+
+    const radius = 10;
+    group.points.forEach((point, index) => {
+      const angle = (Math.PI * 2 * index) / group.points.length;
+      result.push({
+        ...point,
+        px: group.cx + Math.cos(angle) * radius,
+        py: group.cy + Math.sin(angle) * radius
+      });
+    });
+  });
+
+  return result;
+}
+
+function drawRouteLines(points) {
+  const selectedRouteGroup = routeGroupFilter.value;
+  if (selectedRouteGroup === "all") return;
+
+  const routePoints = points
+    .filter((p) => p.routeGroups === selectedRouteGroup)
+    .sort((a, b) => a.y2 - b.y2);
+
+  if (routePoints.length < 2) return;
+
+  const pathData = routePoints
+    .map((p, index) => `${index === 0 ? "M" : "L"} ${p.px} ${p.py}`)
+    .join(" ");
+
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", pathData);
+  path.setAttribute("class", "route-line");
+  routesLayer.appendChild(path);
 }
 
 function updateCampsitePanel(site) {
@@ -331,10 +405,14 @@ function clearDetailPanel() {
   `;
 }
 
-function getCategoryClass(category) {
-  const value = String(category).toLowerCase().trim();
-  if (value === "great walk") return "great-walk";
-  return value.replace(/\s+/g, "-") || "unknown";
+function getRouteTypeClass(routeType) {
+  const value = String(routeType).toLowerCase();
+
+  if (value.includes("camping")) return "camping";
+  if (value.includes("hiking")) return "hiking";
+  if (value.includes("water")) return "water-based";
+
+  return "default-route";
 }
 
 function mapValue(value, start1, stop1, start2, stop2) {

@@ -42,13 +42,29 @@
             This website uses a curated subset of DOC Campsites data to recommend route options rather than simply showing all campsites. The goal is to help users find more suitable camping, hiking, and water-based routes more quickly.
           </p>
         </div>
+
+        <div class="legend-box">
+          <h3>Marker Legend</h3>
+          <div class="legend-item">
+            <span class="legend-shape legend-camping"></span>
+            <span>Camping</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-shape legend-hiking"></span>
+            <span>Hiking</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-shape legend-water"></span>
+            <span>Water-based</span>
+          </div>
+        </div>
       </aside>
 
       <section class="map-panel">
         <div class="map-header panel">
           <h2>Interactive Route Map</h2>
           <p>
-            Hover over or click a campsite marker to inspect how it contributes to a curated route group.
+            Hover over or click a campsite marker to inspect how it contributes to a curated route group. When a route group is selected, the campsites are connected as a route.
           </p>
         </div>
 
@@ -62,6 +78,7 @@
           <div class="map-wrapper" id="mapWrapper">
             <div class="map-content" id="mapContent">
               <div id="svgMapContainer" class="svg-map-container"></div>
+              <svg id="routesLayer" class="routes-layer"></svg>
               <div id="markersLayer" class="markers-layer"></div>
             </div>
           </div>

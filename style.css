@@ -97,7 +97,8 @@ body {
   margin-top: 4px;
 }
 
-.route-note {
+.route-note,
+.legend-box {
   margin-top: 22px;
   padding: 16px;
   border-radius: 16px;
@@ -105,7 +106,8 @@ body {
   border: 1px solid #e6dccb;
 }
 
-.route-note h3 {
+.route-note h3,
+.legend-box h3 {
   font-size: 0.96rem;
   margin-bottom: 8px;
 }
@@ -114,6 +116,37 @@ body {
   font-size: 0.92rem;
   line-height: 1.55;
   color: #4a4a4a;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 0.92rem;
+}
+
+.legend-shape {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.95);
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.04);
+}
+
+.legend-camping {
+  background: #63b35d;
+  border-radius: 50%;
+}
+
+.legend-hiking {
+  background: #5b7fd7;
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+}
+
+.legend-water {
+  background: #e4a83f;
+  transform: rotate(45deg);
 }
 
 .map-panel {
@@ -197,6 +230,24 @@ body {
   max-height: 100%;
 }
 
+.routes-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.route-line {
+  fill: none;
+  stroke: rgba(60, 70, 110, 0.45);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 6 6;
+}
+
 .markers-layer {
   position: absolute;
   inset: 0;
@@ -206,8 +257,7 @@ body {
 .marker {
   position: absolute;
   transform: translate(-50%, -50%);
-  border-radius: 50%;
-  border: 2px solid rgba(255,255,255,0.95);
+  border: 2px solid rgba(255,255,255,0.98);
   box-shadow: 0 0 0 4px rgba(0,0,0,0.05);
   pointer-events: auto;
   transition: transform 0.12s ease;
@@ -218,28 +268,28 @@ body {
   z-index: 5;
 }
 
-.marker.standard {
-  background: #58aa5c;
+.marker.camping {
+  background: #63b35d;
+  border-radius: 50%;
 }
 
-.marker.basic {
-  background: #4b87dc;
+.marker.hiking {
+  background: #5b7fd7;
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
 }
 
-.marker.great-walk {
-  background: #e8b83e;
+.marker.water-based {
+  background: #e4a83f;
+  transform: translate(-50%, -50%) rotate(45deg);
 }
 
-.marker.backcountry {
-  background: #e1745c;
+.marker.water-based:hover {
+  transform: translate(-50%, -50%) rotate(45deg) scale(1.15);
 }
 
-.marker.serviced {
-  background: #9e6edc;
-}
-
-.marker.unknown {
+.marker.default-route {
   background: #9a9a9a;
+  border-radius: 50%;
 }
 
 .region-shape {
