@@ -1,24 +1,17 @@
-const csvFile = "DOC_Campsites_8058496540299118787.csv";
+const csvFile = "final_filtered_route_database.csv";
 const svgFile = "nz-admins.svg";
 
 const svgMapContainer = document.getElementById("svgMapContainer");
 const markersLayer = document.getElementById("markersLayer");
+
+const routeGroupFilter = document.getElementById("routeGroupFilter");
+const routeTypeFilter = document.getElementById("routeTypeFilter");
 const regionFilter = document.getElementById("regionFilter");
 const categoryFilter = document.getElementById("categoryFilter");
 const resetBtn = document.getElementById("resetBtn");
 
 const detailTitle = document.getElementById("detailTitle");
-const officialList = document.getElementById("officialList");
-const projectNote = document.getElementById("projectNote");
-const topbarSubtitle = document.getElementById("topbarSubtitle");
-const mapTitle = document.getElementById("mapTitle");
-const mapDescription = document.getElementById("mapDescription");
-const detailPanelTitle = document.getElementById("detailPanelTitle");
-const sectionHeading = document.getElementById("sectionHeading");
-const secondaryHeading = document.getElementById("secondaryHeading");
-
-const experienceTags = document.getElementById("experienceTags");
-const experienceQuote = document.getElementById("experienceQuote");
+const detailList = document.getElementById("detailList");
 
 const mapWrapper = document.getElementById("mapWrapper");
 const mapContent = document.getElementById("mapContent");
@@ -26,15 +19,10 @@ const zoomInBtn = document.getElementById("zoomInBtn");
 const zoomOutBtn = document.getElementById("zoomOutBtn");
 const zoomResetBtn = document.getElementById("zoomResetBtn");
 
-const modeButtons = document.querySelectorAll(".mode-btn");
-
 let allSites = [];
 let filteredSites = [];
-let allRegionNames = [];
-
 let activeRegionName = null;
 let svgLoaded = false;
-let currentMode = "official";
 
 let minX = Infinity;
 let maxX = -Infinity;
@@ -58,30 +46,6 @@ const paddingRight = 0.94;
 const paddingTop = 0.06;
 const paddingBottom = 0.94;
 
-// fake experience layer
-const experienceData = {
-  "Lake Rotoiti Campsite": {
-    text: "A calm lakeside stop that feels slower and quieter than the official data suggests. The place is experienced through stillness, reflection, and soft landscape edges.",
-    tags: ["quiet", "scenic", "easy access", "family friendly"],
-    quote: "It felt more like a pause than a destination."
-  },
-  "Mavora Lakes Campsite": {
-    text: "A wide open site that feels remote and exposed. The effort of getting there becomes part of the place itself.",
-    tags: ["remote", "open landscape", "quiet", "long drive"],
-    quote: "The remoteness arrived before I did."
-  },
-  "Routeburn Flats Campsite": {
-    text: "This place is shaped by movement, anticipation, and the shared rhythm of the track. It feels active and collective.",
-    tags: ["busy", "iconic", "track-based", "high demand"],
-    quote: "It felt like part of a journey, not just a stop."
-  },
-  "Pelorus Bridge Campsite": {
-    text: "The site feels structured and accessible, with a more family-oriented atmosphere than the official data alone can show.",
-    tags: ["family friendly", "accessible", "comfortable", "serviced"],
-    quote: "Nature felt organised here, but still welcoming."
-  }
-};
-
 init();
 
 async function init() {
@@ -90,7 +54,6 @@ async function init() {
   setupEvents();
   applyFilters();
   updateMapTransform();
-  updateModeUI();
 }
 
 async function loadSVGMap() {
@@ -152,12 +115,22 @@ async function loadCSVData() {
 
             return {
               siteName: row["Name of site"] || "Unknown site",
+              clusterGroup: row["cluster_group"] || "Unknown cluster",
+              routeGroups: row["route_groups"] || "Unknown route group",
+              routeTypeFocus: row["route_type_focus"] || "Unknown route type",
               region: row["Region"] || "Not specified",
+              place: row["Place"] || "Not specified",
+              siteDescription: row["Site description"] || "Not specified",
               category: row["Campsite category"] || "Unknown",
-              accessBy: row["Access by"] || "Not specified",
-              dogPolicy: cleanText(row["Dogs alllowed"]),
-              facilities: cleanText(row["Facilities"]),
               unpoweredSites: isNaN(unpowered) ? 0 : unpowered,
+              bookable: row["Bookable"] || "Unknown",
+              free: row["Free"] || "Unknown",
+              facilities: row["Facilities cleaned"] || "Not specified",
+              activities: row["Activities cleaned"] || "Not specified",
+              dogs: row["Dogs cleaned"] || "Not specified",
+              landscape: row["Landscape type"] || "Not specified",
+              accessBy: row["Access by"] || "Not specified",
+              placeDescription: row["Description of place"] || "Not specified",
               url: row["URL to webpage"] || "",
               x2,
               y2
@@ -165,7 +138,6 @@ async function loadCSVData() {
           })
           .filter(Boolean);
 
-        allRegionNames = [...new Set(allSites.map((site) => site.region).filter(Boolean))].sort();
         populateFilters();
         resolve();
       }
@@ -174,35 +146,35 @@ async function loadCSVData() {
 }
 
 function populateFilters() {
-  const categories = [...new Set(allSites.map((site) => site.category).filter(Boolean))].sort();
+  const routeGroups = [...new Set(allSites.map(site => site.routeGroups).filter(Boolean))].sort();
+  const routeTypes = [...new Set(allSites.map(site => site.routeTypeFocus).filter(Boolean))].sort();
+  const regions = [...new Set(allSites.map(site => site.region).filter(Boolean))].sort();
+  const categories = [...new Set(allSites.map(site => site.category).filter(Boolean))].sort();
 
-  allRegionNames.forEach((region) => {
-    const option = document.createElement("option");
-    option.value = region;
-    option.textContent = region;
-    regionFilter.appendChild(option);
-  });
+  fillSelect(routeGroupFilter, routeGroups);
+  fillSelect(routeTypeFilter, routeTypes);
+  fillSelect(regionFilter, regions);
+  fillSelect(categoryFilter, categories);
+}
 
-  categories.forEach((category) => {
+function fillSelect(selectElement, values) {
+  values.forEach((value) => {
     const option = document.createElement("option");
-    option.value = category;
-    option.textContent = category;
-    categoryFilter.appendChild(option);
+    option.value = value;
+    option.textContent = value;
+    selectElement.appendChild(option);
   });
 }
 
 function setupEvents() {
-  regionFilter.addEventListener("change", () => {
-    activeRegionName = null;
-    highlightActiveRegion();
-    applyFilters();
-  });
-
-  categoryFilter.addEventListener("change", () => {
-    applyFilters();
-  });
+  routeGroupFilter.addEventListener("change", onFilterChange);
+  routeTypeFilter.addEventListener("change", onFilterChange);
+  regionFilter.addEventListener("change", onFilterChange);
+  categoryFilter.addEventListener("change", onFilterChange);
 
   resetBtn.addEventListener("click", () => {
+    routeGroupFilter.value = "all";
+    routeTypeFilter.value = "all";
     regionFilter.value = "all";
     categoryFilter.value = "all";
     activeRegionName = null;
@@ -280,43 +252,12 @@ function setupEvents() {
   window.addEventListener("resize", () => {
     renderMarkers();
   });
-
-  modeButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      modeButtons.forEach((btn) => btn.classList.remove("active"));
-      button.classList.add("active");
-      currentMode = button.dataset.mode;
-      updateModeUI();
-      renderMarkers();
-      clearDetailPanel();
-    });
-  });
 }
 
-function updateModeUI() {
-  document.body.classList.toggle("experience-mode", currentMode === "experience");
-
-  if (currentMode === "official") {
-    topbarSubtitle.textContent = "DOC Campsites · Official dataset prototype";
-    mapTitle.textContent = "Interactive Campsite Map";
-    mapDescription.textContent =
-      "This version uses a downloadable SVG map so that regions and campsite markers can work together.";
-    detailPanelTitle.textContent = "Selected Information";
-    sectionHeading.textContent = "Region / Campsite Info";
-    secondaryHeading.textContent = "Project Note";
-    projectNote.textContent =
-      "This prototype explores how public natural places are organised through official data.";
-  } else {
-    topbarSubtitle.textContent = "Experience View · Simulated place-based layer";
-    mapTitle.textContent = "Experience Map";
-    mapDescription.textContent =
-      "This layer imagines campsites through atmosphere, effort, memory, and use rather than only through official categories.";
-    detailPanelTitle.textContent = "Selected Experience";
-    sectionHeading.textContent = "Experience Description";
-    secondaryHeading.textContent = "Reflection";
-    projectNote.textContent =
-      "This simulated layer contrasts official data with how places might be felt and remembered.";
-  }
+function onFilterChange() {
+  activeRegionName = null;
+  highlightActiveRegion();
+  applyFilters();
 }
 
 function updateMapTransform() {
@@ -325,13 +266,19 @@ function updateMapTransform() {
 
 function applyFilters() {
   filteredSites = allSites.filter((site) => {
+    const routeGroupMatch =
+      routeGroupFilter.value === "all" || site.routeGroups === routeGroupFilter.value;
+
+    const routeTypeMatch =
+      routeTypeFilter.value === "all" || site.routeTypeFocus === routeTypeFilter.value;
+
     const regionMatch =
       regionFilter.value === "all" || site.region === regionFilter.value;
 
     const categoryMatch =
       categoryFilter.value === "all" || site.category === categoryFilter.value;
 
-    return regionMatch && categoryMatch;
+    return routeGroupMatch && routeTypeMatch && regionMatch && categoryMatch;
   });
 
   renderMarkers();
@@ -359,7 +306,7 @@ function renderMarkers() {
 
   filteredSites.forEach((site) => {
     const marker = document.createElement("div");
-    marker.className = `marker ${currentMode} ${getCategoryClass(site.category)}`;
+    marker.className = `marker ${getCategoryClass(site.category)}`;
 
     const relativeX = mapValue(site.x2, minX, maxX, paddingLeft, paddingRight);
     const relativeY = mapValue(site.y2, maxY, minY, paddingTop, paddingBottom);
@@ -370,31 +317,20 @@ function renderMarkers() {
     marker.style.left = `${px}px`;
     marker.style.top = `${py}px`;
 
-    const size = currentMode === "official"
-      ? clamp(mapValue(site.unpoweredSites, 0, 300, 5, 10), 5, 10)
-      : clamp(mapValue(site.unpoweredSites, 0, 300, 8, 14), 8, 14);
-
+    const size = clamp(mapValue(site.unpoweredSites, 0, 300, 6, 12), 6, 12);
     marker.style.width = `${size}px`;
     marker.style.height = `${size}px`;
 
     marker.addEventListener("mouseenter", () => {
-      updateDetailForMode(site);
+      updateCampsitePanel(site);
     });
 
     marker.addEventListener("click", () => {
-      updateDetailForMode(site);
+      updateCampsitePanel(site);
     });
 
     markersLayer.appendChild(marker);
   });
-}
-
-function updateDetailForMode(site) {
-  if (currentMode === "official") {
-    updateCampsitePanel(site);
-  } else {
-    updateExperiencePanel(site);
-  }
 }
 
 function highlightActiveRegion() {
@@ -410,84 +346,43 @@ function highlightActiveRegion() {
 function updateCampsitePanel(site) {
   detailTitle.textContent = site.siteName;
 
-  officialList.innerHTML = `
+  detailList.innerHTML = `
+    <li><strong>Route Group:</strong> ${site.routeGroups}</li>
+    <li><strong>Route Type:</strong> ${site.routeTypeFocus}</li>
+    <li><strong>Cluster:</strong> ${site.clusterGroup}</li>
     <li><strong>Region:</strong> ${site.region}</li>
+    <li><strong>Place:</strong> ${site.place}</li>
     <li><strong>Category:</strong> ${site.category}</li>
     <li><strong>Access:</strong> ${site.accessBy}</li>
-    <li><strong>Dog Policy:</strong> ${site.dogPolicy}</li>
-    <li><strong>Unpowered Sites:</strong> ${site.unpoweredSites}</li>
+    <li><strong>Activities:</strong> ${site.activities}</li>
     <li><strong>Facilities:</strong> ${site.facilities}</li>
+    <li><strong>Landscape:</strong> ${site.landscape}</li>
+    <li><strong>Dogs:</strong> ${site.dogs}</li>
+    <li><strong>Bookable:</strong> ${site.bookable}</li>
+    <li><strong>Free:</strong> ${site.free}</li>
+    <li><strong>Unpowered Sites:</strong> ${site.unpoweredSites}</li>
     <li><strong>Website:</strong> ${
       site.url ? `<a href="${site.url}" target="_blank">Open DOC page</a>` : "Not available"
     }</li>
   `;
 }
 
-function updateExperiencePanel(site) {
-  const exp = experienceData[site.siteName] || buildFallbackExperience(site);
-
-  detailTitle.textContent = site.siteName;
-
-  officialList.innerHTML = `
-    <li>${exp.text}</li>
-  `;
-
-  projectNote.textContent = exp.reflection;
-
-  experienceTags.innerHTML = "";
-  exp.tags.forEach((tag) => {
-    const span = document.createElement("span");
-    span.className = "tag";
-    span.textContent = tag;
-    experienceTags.appendChild(span);
-  });
-
-  experienceQuote.textContent = `“${exp.quote}”`;
-}
-
-function buildFallbackExperience(site) {
-  return {
-    text: `This campsite may be experienced differently from how it appears in official data. Access, atmosphere, weather, and memory can all shape how the place is felt.`,
-    reflection: `Official data describes ${site.siteName} through category, access, and facilities. An experience layer invites viewers to think about how the place might be lived rather than only managed.`,
-    tags: ["scenic", "situated", "place-based"],
-    quote: "The data describes the site, but not the feeling of being there."
-  };
-}
-
 function updateRegionPanel(regionId) {
   detailTitle.textContent = getFriendlyRegionName(regionId);
 
-  officialList.innerHTML = `
+  detailList.innerHTML = `
     <li><strong>Selected Region:</strong> ${getFriendlyRegionName(regionId)}</li>
     <li><strong>Map interaction:</strong> region highlight only</li>
     <li><strong>Markers:</strong> remain visible unless filtered from the left panel</li>
-    <li><strong>Navigation:</strong> zoom and drag enabled</li>
+    <li><strong>Database:</strong> curated route-based campsite subset</li>
   `;
 }
 
 function clearDetailPanel() {
   detailTitle.textContent = "Select a region or campsite";
-
-  if (currentMode === "official") {
-    officialList.innerHTML = `
-      <li>Click a region on the map or hover over a campsite marker.</li>
-    `;
-    projectNote.textContent =
-      "This prototype explores how public natural places are organised through official data.";
-  } else {
-    officialList.innerHTML = `
-      <li>Hover over a campsite marker to see a simulated place-based description.</li>
-    `;
-    projectNote.textContent =
-      "This simulated layer contrasts official data with how places might be felt and remembered.";
-
-    experienceTags.innerHTML = `
-      <span class="tag">quiet</span>
-      <span class="tag">scenic</span>
-    `;
-    experienceQuote.textContent =
-      "“This place felt slower and quieter than the official information suggested.”";
-  }
+  detailList.innerHTML = `
+    <li>Click a region on the map or hover over a campsite marker.</li>
+  `;
 }
 
 function getFriendlyRegionName(regionId) {
@@ -514,18 +409,9 @@ function getFriendlyRegionName(regionId) {
 }
 
 function getCategoryClass(category) {
-  const value = category.toLowerCase().trim();
+  const value = String(category).toLowerCase().trim();
   if (value === "great walk") return "great-walk";
   return value.replace(/\s+/g, "-") || "unknown";
-}
-
-function cleanText(value) {
-  if (!value) return "Not specified";
-  let cleaned = String(value);
-  cleaned = cleaned.replace(/<[^>]*>/g, "");
-  cleaned = cleaned.replace(/https?:\/\/\S+/g, "");
-  cleaned = cleaned.replace(/\s+/g, " ").trim();
-  return cleaned || "Not specified";
 }
 
 function mapValue(value, start1, stop1, start2, stop2) {

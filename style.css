@@ -35,37 +35,9 @@ body {
   color: #666;
 }
 
-.topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.mode-switch {
-  display: flex;
-  background: #ecece7;
-  border-radius: 999px;
-  padding: 4px;
-  gap: 4px;
-}
-
-.mode-btn {
-  border: none;
-  background: transparent;
-  padding: 8px 16px;
-  border-radius: 999px;
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-
-.mode-btn.active {
-  background: #1f1f1f;
-  color: white;
-}
-
 .main-layout {
   display: grid;
-  grid-template-columns: 250px 1fr 320px;
+  grid-template-columns: 270px 1fr 340px;
   gap: 20px;
   padding: 20px;
 }
@@ -84,7 +56,7 @@ body {
 }
 
 .filter-group {
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .filter-group label {
@@ -114,21 +86,20 @@ body {
   font-weight: bold;
 }
 
-.experience-note {
+.route-note {
   margin-top: 22px;
   padding: 14px;
   border-radius: 14px;
   background: #f5efe5;
   border: 1px solid #e6dccb;
-  display: none;
 }
 
-.experience-note h3 {
+.route-note h3 {
   font-size: 0.95rem;
   margin-bottom: 8px;
 }
 
-.experience-note p {
+.route-note p {
   font-size: 0.9rem;
   line-height: 1.5;
   color: #4a4a4a;
@@ -217,6 +188,7 @@ body {
 .marker {
   position: absolute;
   transform: translate(-50%, -50%);
+  border-radius: 50%;
   border: 2px solid rgba(255,255,255,0.95);
   box-shadow: 0 0 0 4px rgba(0,0,0,0.05);
   pointer-events: auto;
@@ -226,15 +198,6 @@ body {
 .marker:hover {
   transform: translate(-50%, -50%) scale(1.18);
   z-index: 5;
-}
-
-.marker.official {
-  border-radius: 50%;
-}
-
-.marker.experience {
-  border-radius: 4px;
-  box-shadow: 0 0 0 6px rgba(133, 103, 48, 0.08);
 }
 
 .marker.standard {
@@ -313,51 +276,15 @@ body {
 }
 
 .detail-list li,
-.detail-section p,
-blockquote {
+.detail-section p {
   font-size: 0.92rem;
   line-height: 1.5;
   color: #333;
 }
 
-blockquote {
-  padding-left: 12px;
-  border-left: 3px solid #d8ccb7;
-}
-
-.tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.tag {
-  background: #e9e1d2;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 0.82rem;
-}
-
-.experience-only {
-  display: none;
-}
-
-body.experience-mode .experience-only {
-  display: block;
-}
-
-body.experience-mode .experience-note {
-  display: block;
-}
-
-body.experience-mode .map-wrapper {
-  background: linear-gradient(to bottom, #fbfaf6, #f0ece2);
-  border-radius: 18px;
-}
-
 @media (max-width: 1100px) {
   .main-layout {
-    grid-template-columns: 220px 1fr;
+    grid-template-columns: 240px 1fr;
   }
 
   .detail-panel {

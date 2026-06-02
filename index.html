@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>How Data Defines Nature</title>
+  <title>Route Recommendation Map</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
@@ -11,21 +11,29 @@
   <div class="app">
     <header class="topbar">
       <div class="brand">
-        <h1>How Data Defines Nature</h1>
-        <p id="topbarSubtitle">DOC Campsites · Official dataset prototype</p>
-      </div>
-
-      <div class="topbar-right">
-        <div class="mode-switch">
-          <button class="mode-btn active" data-mode="official">Official View</button>
-          <button class="mode-btn" data-mode="experience">Experience View</button>
-        </div>
+        <h1>Route Recommendation Map</h1>
+        <p>Curated DOC Campsites route database</p>
       </div>
     </header>
 
     <main class="main-layout">
+      <!-- Left Filters -->
       <aside class="panel filters-panel">
-        <h2 id="filtersTitle">Filters</h2>
+        <h2>Filters</h2>
+
+        <div class="filter-group">
+          <label for="routeGroupFilter">Route Group</label>
+          <select id="routeGroupFilter">
+            <option value="all">All Route Groups</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="routeTypeFilter">Route Type</label>
+          <select id="routeTypeFilter">
+            <option value="all">All Route Types</option>
+          </select>
+        </div>
 
         <div class="filter-group">
           <label for="regionFilter">Region</label>
@@ -43,20 +51,22 @@
 
         <button class="reset-btn" id="resetBtn">Reset Filters</button>
 
-        <div class="experience-note" id="experienceNote">
-          <h3>Experience Layer</h3>
+        <div class="route-note">
+          <h3>Project Focus</h3>
           <p>
-            This simulated layer imagines how campsites might be felt through atmosphere, effort,
-            memory, and use, rather than only through official management categories.
+            This website uses a curated subset of DOC Campsites data to recommend route options
+            rather than simply showing all campsites. The goal is to help users find more suitable
+            camping, hiking, and water-based routes more quickly.
           </p>
         </div>
       </aside>
 
+      <!-- Middle Map -->
       <section class="map-panel">
         <div class="map-header panel">
-          <h2 id="mapTitle">Interactive Campsite Map</h2>
-          <p id="mapDescription">
-            This version uses a downloadable SVG map so that regions and campsite markers can work together.
+          <h2>Interactive Route Map</h2>
+          <p>
+            Hover over or click a campsite marker to inspect how it contributes to a curated route group.
           </p>
         </div>
 
@@ -76,40 +86,26 @@
         </div>
       </section>
 
+      <!-- Right Detail Panel -->
       <aside class="panel detail-panel">
-        <h2 id="detailPanelTitle">Selected Information</h2>
+        <h2>Selected Campsite</h2>
 
         <div class="detail-card">
           <div class="detail-content">
             <h3 id="detailTitle">Select a region or campsite</h3>
 
             <div class="detail-section">
-              <h4 id="sectionHeading">Region / Campsite Info</h4>
-              <ul class="detail-list" id="officialList">
+              <h4>Campsite / Route Info</h4>
+              <ul class="detail-list" id="detailList">
                 <li>Click a region on the map or hover over a campsite marker.</li>
               </ul>
             </div>
 
             <div class="detail-section">
-              <h4 id="secondaryHeading">Project Note</h4>
+              <h4>Project Note</h4>
               <p id="projectNote">
-                This prototype explores how public natural places are organised through official data.
+                This prototype uses a smaller curated database to organise campsites into route-based recommendations.
               </p>
-            </div>
-
-            <div class="detail-section experience-only" id="experienceTagsSection">
-              <h4>Experience Tags</h4>
-              <div class="tags" id="experienceTags">
-                <span class="tag">quiet</span>
-                <span class="tag">scenic</span>
-              </div>
-            </div>
-
-            <div class="detail-section experience-only" id="experienceQuoteSection">
-              <h4>Visitor Note</h4>
-              <blockquote id="experienceQuote">
-                “This place felt slower and quieter than the official information suggested.”
-              </blockquote>
             </div>
           </div>
         </div>
