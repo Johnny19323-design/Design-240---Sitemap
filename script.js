@@ -6,8 +6,6 @@ const markersLayer = document.getElementById("markersLayer");
 
 const routeGroupFilter = document.getElementById("routeGroupFilter");
 const routeTypeFilter = document.getElementById("routeTypeFilter");
-const regionFilter = document.getElementById("regionFilter");
-const categoryFilter = document.getElementById("categoryFilter");
 const resetBtn = document.getElementById("resetBtn");
 
 const detailTitle = document.getElementById("detailTitle");
@@ -21,13 +19,12 @@ const zoomResetBtn = document.getElementById("zoomResetBtn");
 
 let allSites = [];
 let filteredSites = [];
-let activeRegionName = null;
 let svgLoaded = false;
 
-const minX = 1080000;
-const maxX = 2120000;
-const minY = 4720000;
-const maxY = 6230000;
+let mapMinX = Infinity;
+let mapMaxX = -Infinity;
+let mapMinY = Infinity;
+let mapMaxY = -Infinity;
 
 let zoomLevel = 1;
 let panX = 0;
@@ -39,10 +36,10 @@ let dragStartY = 0;
 let startPanX = 0;
 let startPanY = 0;
 
-const paddingLeft = 0.12;
-const paddingRight = 0.88;
-const paddingTop = 0.08;
-const paddingBottom = 0.92;
+const paddingLeft = 0.18;
+const paddingRight = 0.82;
+const paddingTop = 0.12;
+const paddingBottom = 0.88;
 
 init();
 
@@ -74,7 +71,6 @@ function prepareSVGRegions() {
   svg.removeAttribute("height");
 
   const regionShapes = svg.querySelectorAll("path[id], polygon[id]");
-
   regionShapes.forEach((shape) => {
     shape.classList.add("region-shape");
   });
@@ -95,6 +91,11 @@ async function loadCSVData() {
 
             if (isNaN(x2) || isNaN(y2)) return null;
 
+            mapMinX = Math.min(mapMinX, x2);
+            mapMaxX = Math.max(mapMaxX, x2);
+            mapMinY = Math.min(mapMinY, y2);
+            mapMaxY = Math.max(mapMaxY, y2);
+
             return {
               siteName: row["Name of site"] || "Unknown site",
               clusterGroup: row["cluster_group"] || "Unknown cluster",
@@ -102,7 +103,6 @@ async function loadCSVData() {
               routeTypeFocus: row["route_type_focus"] || "Unknown route type",
               region: row["Region"] || "Not specified",
               place: row["Place"] || "Not specified",
-              siteDescription: row["Site description"] || "Not specified",
               category: row["Campsite category"] || "Unknown",
               unpoweredSites: isNaN(unpowered) ? 0 : unpowered,
               bookable: row["Bookable"] || "Unknown",
@@ -112,7 +112,6 @@ async function loadCSVData() {
               dogs: row["Dogs cleaned"] || "Not specified",
               landscape: row["Landscape type"] || "Not specified",
               accessBy: row["Access by"] || "Not specified",
-              placeDescription: row["Description of place"] || "Not specified",
               url: row["URL to webpage"] || "",
               x2,
               y2
@@ -130,13 +129,9 @@ async function loadCSVData() {
 function populateFilters() {
   const routeGroups = [...new Set(allSites.map(site => site.routeGroups).filter(Boolean))].sort();
   const routeTypes = [...new Set(allSites.map(site => site.routeTypeFocus).filter(Boolean))].sort();
-  const regions = [...new Set(allSites.map(site => site.region).filter(Boolean))].sort();
-  const categories = [...new Set(allSites.map(site => site.category).filter(Boolean))].sort();
 
   fillSelect(routeGroupFilter, routeGroups);
   fillSelect(routeTypeFilter, routeTypes);
-  fillSelect(regionFilter, regions);
-  fillSelect(categoryFilter, categories);
 }
 
 function fillSelect(selectElement, values) {
@@ -151,16 +146,10 @@ function fillSelect(selectElement, values) {
 function setupEvents() {
   routeGroupFilter.addEventListener("change", onFilterChange);
   routeTypeFilter.addEventListener("change", onFilterChange);
-  regionFilter.addEventListener("change", onFilterChange);
-  categoryFilter.addEventListener("change", onFilterChange);
 
   resetBtn.addEventListener("click", () => {
     routeGroupFilter.value = "all";
     routeTypeFilter.value = "all";
-    regionFilter.value = "all";
-    categoryFilter.value = "all";
-    activeRegionName = null;
-    highlightActiveRegion();
     zoomLevel = 1;
     panX = 0;
     panY = 0;
@@ -244,8 +233,6 @@ function setupEvents() {
 }
 
 function onFilterChange() {
-  activeRegionName = null;
-  highlightActiveRegion();
   applyFilters();
 }
 
@@ -261,20 +248,11 @@ function applyFilters() {
     const routeTypeMatch =
       routeTypeFilter.value === "all" || site.routeTypeFocus === routeTypeFilter.value;
 
-    const regionMatch =
-      regionFilter.value === "all" || site.region === regionFilter.value;
-
-    const categoryMatch =
-      categoryFilter.value === "all" || site.category === categoryFilter.value;
-
-    return routeGroupMatch && routeTypeMatch && regionMatch && categoryMatch;
+    return routeGroupMatch && routeTypeMatch;
   });
 
+  clearDetailPanel();
   renderMarkers();
-
-  if (!activeRegionName) {
-    clearDetailPanel();
-  }
 }
 
 function renderMarkers() {
@@ -297,8 +275,8 @@ function renderMarkers() {
     const marker = document.createElement("div");
     marker.className = `marker ${getCategoryClass(site.category)}`;
 
-    const relativeX = mapValue(site.x2, minX, maxX, paddingLeft, paddingRight);
-    const relativeY = mapValue(site.y2, maxY, minY, paddingTop, paddingBottom);
+    const relativeX = mapValue(site.x2, mapMinX, mapMaxX, paddingLeft, paddingRight);
+    const relativeY = mapValue(site.y2, mapMaxY, mapMinY, paddingTop, paddingBottom);
 
     const px = svgLeft + svgWidth * relativeX;
     const py = svgTop + svgHeight * relativeY;
@@ -319,16 +297,6 @@ function renderMarkers() {
     });
 
     markersLayer.appendChild(marker);
-  });
-}
-
-function highlightActiveRegion() {
-  const shapes = svgMapContainer.querySelectorAll(".region-shape");
-  shapes.forEach((shape) => {
-    shape.classList.remove("active-region");
-    if (activeRegionName && shape.dataset.regionId === activeRegionName) {
-      shape.classList.add("active-region");
-    }
   });
 }
 
@@ -356,45 +324,11 @@ function updateCampsitePanel(site) {
   `;
 }
 
-function updateRegionPanel(regionId) {
-  detailTitle.textContent = getFriendlyRegionName(regionId);
-
-  detailList.innerHTML = `
-    <li><strong>Selected Region:</strong> ${getFriendlyRegionName(regionId)}</li>
-    <li><strong>Map interaction:</strong> region highlight only</li>
-    <li><strong>Markers:</strong> remain visible unless filtered from the left panel</li>
-    <li><strong>Database:</strong> curated route-based campsite subset</li>
-  `;
-}
-
 function clearDetailPanel() {
   detailTitle.textContent = "Select a campsite";
   detailList.innerHTML = `
     <li>Use the filters on the left or hover over a campsite marker.</li>
   `;
-}
-
-function getFriendlyRegionName(regionId) {
-  const names = {
-    NZAUK: "Auckland",
-    NZBOP: "Bay of Plenty",
-    NZCAN: "Canterbury",
-    NZGIS: "Gisborne",
-    NZHKB: "Hawke's Bay",
-    NZMBH: "Marlborough",
-    NZMWT: "Manawatū-Whanganui",
-    NZNSN: "Nelson",
-    NZNTL: "Northland",
-    NZOTA: "Otago",
-    NZSTL: "Southland",
-    NZTAS: "Tasman",
-    NZTKI: "Taranaki",
-    NZWGN: "Wellington",
-    NZWKO: "Waikato",
-    NZWTC: "West Coast"
-  };
-
-  return names[regionId] || regionId;
 }
 
 function getCategoryClass(category) {
