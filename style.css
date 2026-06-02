@@ -8,62 +8,60 @@ body {
   font-family: Arial, sans-serif;
   background: #f6f6f2;
   color: #1f1f1f;
+  overflow: hidden;
 }
 
 .app {
-  min-height: 100vh;
+  height: 100vh;
   display: grid;
-  grid-template-rows: 72px 1fr;
+  grid-template-rows: 78px 1fr;
 }
 
 .topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
+  padding: 0 28px;
   border-bottom: 1px solid #dddddd;
   background: #ffffff;
 }
 
 .brand h1 {
-  font-size: 1.4rem;
+  font-size: 1.45rem;
   margin-bottom: 2px;
 }
 
 .brand p {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: #666;
 }
 
 .main-layout {
   display: grid;
-  grid-template-columns: 270px 1fr 340px;
+  grid-template-columns: 290px minmax(520px, 1fr) 360px;
   gap: 20px;
   padding: 20px;
-  height: calc(100vh - 72px);
+  min-height: 0;
   overflow: hidden;
 }
 
 .panel {
   background: #ffffff;
   border: 1px solid #dddddd;
-  border-radius: 18px;
+  border-radius: 20px;
   padding: 20px;
 }
 
 .filters-panel,
 .detail-panel {
-  position: sticky;
-  top: 20px;
-  align-self: start;
-  max-height: calc(100vh - 112px);
+  height: 100%;
   overflow: auto;
 }
 
 .filters-panel h2,
 .detail-panel h2 {
   font-size: 1.1rem;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .filter-group {
@@ -80,9 +78,9 @@ body {
 
 .filter-group select {
   width: 100%;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border: 1px solid #cccccc;
-  border-radius: 10px;
+  border-radius: 12px;
   background: #fafafa;
   font-size: 15px;
 }
@@ -92,8 +90,8 @@ body {
   border: none;
   background: #dfe8d3;
   color: #1f1f1f;
-  padding: 12px;
-  border-radius: 10px;
+  padding: 13px;
+  border-radius: 12px;
   cursor: pointer;
   font-weight: bold;
   margin-top: 4px;
@@ -101,20 +99,20 @@ body {
 
 .route-note {
   margin-top: 22px;
-  padding: 14px;
-  border-radius: 14px;
+  padding: 16px;
+  border-radius: 16px;
   background: #f5efe5;
   border: 1px solid #e6dccb;
 }
 
 .route-note h3 {
-  font-size: 0.95rem;
+  font-size: 0.96rem;
   margin-bottom: 8px;
 }
 
 .route-note p {
-  font-size: 0.9rem;
-  line-height: 1.5;
+  font-size: 0.92rem;
+  line-height: 1.55;
   color: #4a4a4a;
 }
 
@@ -132,16 +130,16 @@ body {
 }
 
 .map-header p {
-  font-size: 0.92rem;
+  font-size: 0.94rem;
   color: #666;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 .map-stage {
-  min-height: auto;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto 1fr;
   gap: 12px;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -154,22 +152,22 @@ body {
 .map-toolbar button {
   border: 1px solid #cccccc;
   background: white;
-  padding: 8px 14px;
-  border-radius: 10px;
+  padding: 9px 15px;
+  border-radius: 12px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .map-wrapper {
   position: relative;
   width: 100%;
-  max-width: 540px;
-  aspect-ratio: 0.72 / 1;
+  height: 100%;
   min-height: 0;
-  margin: 0 auto;
   overflow: hidden;
   cursor: grab;
   user-select: none;
+  border-radius: 16px;
+  background: #f7f8f4;
 }
 
 .map-wrapper.dragging {
@@ -177,23 +175,26 @@ body {
 }
 
 .map-content {
-  position: relative;
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 0;
   transform-origin: center center;
   transition: transform 0.12s ease;
 }
 
 .svg-map-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .svg-map-container svg {
-  width: 100%;
-  height: auto;
   display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
 }
 
 .markers-layer {
@@ -259,13 +260,13 @@ body {
 
 .detail-card {
   border: 1px solid #e2e2e2;
-  border-radius: 16px;
+  border-radius: 18px;
   overflow: hidden;
   background: #fafafa;
 }
 
 .detail-content {
-  padding: 16px;
+  padding: 18px;
 }
 
 .detail-content h3 {
@@ -294,51 +295,42 @@ body {
 
 .detail-list li,
 .detail-section p {
-  font-size: 0.92rem;
-  line-height: 1.5;
+  font-size: 0.94rem;
+  line-height: 1.55;
   color: #333;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1300px) {
   .main-layout {
-    grid-template-columns: 240px 1fr 300px;
-  }
-
-  .map-wrapper {
-    max-width: 500px;
+    grid-template-columns: 260px minmax(420px, 1fr) 320px;
   }
 }
 
 @media (max-width: 1100px) {
-  .main-layout {
-    grid-template-columns: 240px 1fr;
+  body {
+    overflow: auto;
+  }
+
+  .app {
     height: auto;
+  }
+
+  .main-layout {
+    grid-template-columns: 1fr;
     overflow: visible;
   }
 
   .filters-panel,
   .detail-panel {
-    position: relative;
-    top: 0;
-    max-height: none;
+    height: auto;
     overflow: visible;
   }
 
-  .detail-panel {
-    grid-column: 1 / -1;
+  .map-panel {
+    min-height: 680px;
   }
 
-  .map-wrapper {
-    max-width: 500px;
-  }
-}
-
-@media (max-width: 760px) {
-  .main-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .map-wrapper {
-    max-width: 420px;
+  .map-stage {
+    min-height: 560px;
   }
 }

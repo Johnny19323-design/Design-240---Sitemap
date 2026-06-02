@@ -24,13 +24,11 @@ let filteredSites = [];
 let activeRegionName = null;
 let svgLoaded = false;
 
-// fixed NZTM bounds for the full NZ map
 const minX = 1080000;
 const maxX = 2120000;
 const minY = 4720000;
 const maxY = 6230000;
 
-// zoom + pan
 let zoomLevel = 1;
 let panX = 0;
 let panY = 0;
@@ -41,7 +39,6 @@ let dragStartY = 0;
 let startPanX = 0;
 let startPanY = 0;
 
-// marker padding inside visible SVG area
 const paddingLeft = 0.12;
 const paddingRight = 0.88;
 const paddingTop = 0.08;
@@ -134,9 +131,6 @@ async function loadCSVData() {
           })
           .filter(Boolean);
 
-        console.log("CSV file:", csvFile);
-        console.log("Loaded sites:", allSites.length);
-
         populateFilters();
         resolve();
       }
@@ -178,7 +172,11 @@ function setupEvents() {
     categoryFilter.value = "all";
     activeRegionName = null;
     highlightActiveRegion();
+    zoomLevel = 1;
+    panX = 0;
+    panY = 0;
     applyFilters();
+    updateMapTransform();
   });
 
   zoomInBtn.addEventListener("click", () => {
@@ -210,7 +208,6 @@ function setupEvents() {
     dragStartY = event.clientY;
     startPanX = panX;
     startPanY = panY;
-
     mapWrapper.classList.add("dragging");
   });
 
@@ -231,22 +228,26 @@ function setupEvents() {
     mapWrapper.classList.remove("dragging");
   });
 
-  mapWrapper.addEventListener("wheel", (event) => {
-    event.preventDefault();
+  mapWrapper.addEventListener(
+    "wheel",
+    (event) => {
+      event.preventDefault();
 
-    if (event.deltaY < 0) {
-      zoomLevel = Math.min(zoomLevel + 0.1, 3);
-    } else {
-      zoomLevel = Math.max(zoomLevel - 0.1, 1);
-    }
+      if (event.deltaY < 0) {
+        zoomLevel = Math.min(zoomLevel + 0.1, 3);
+      } else {
+        zoomLevel = Math.max(zoomLevel - 0.1, 1);
+      }
 
-    if (zoomLevel === 1) {
-      panX = 0;
-      panY = 0;
-    }
+      if (zoomLevel === 1) {
+        panX = 0;
+        panY = 0;
+      }
 
-    updateMapTransform();
-  }, { passive: false });
+      updateMapTransform();
+    },
+    { passive: false }
+  );
 
   window.addEventListener("resize", () => {
     renderMarkers();
@@ -296,10 +297,10 @@ function renderMarkers() {
   if (!svg) return;
 
   const svgRect = svg.getBoundingClientRect();
-  const wrapperRect = svgMapContainer.getBoundingClientRect();
+  const containerRect = svgMapContainer.getBoundingClientRect();
 
-  const svgLeft = svgRect.left - wrapperRect.left;
-  const svgTop = svgRect.top - wrapperRect.top;
+  const svgLeft = svgRect.left - containerRect.left;
+  const svgTop = svgRect.top - containerRect.top;
   const svgWidth = svgRect.width;
   const svgHeight = svgRect.height;
 
