@@ -129,29 +129,33 @@ body {
 
 .legend-shape {
   display: inline-block;
-  width: 16px;
-  height: 16px;
   border: 2px solid rgba(255,255,255,0.95);
   box-shadow: 0 0 0 3px rgba(0,0,0,0.04);
 }
 
 .legend-camping {
+  width: 12px;
+  height: 12px;
   background: #63b35d;
   border-radius: 50%;
 }
 
 .legend-hiking {
+  width: 12px;
+  height: 12px;
   background: #5b7fd7;
 }
 
 .legend-water {
+  width: 12px;
+  height: 12px;
   background: #e4a83f;
   transform: rotate(45deg);
 }
 
 .map-panel {
   display: grid;
-  grid-template-rows: minmax(420px, 1fr) 220px;
+  grid-template-rows: minmax(420px, 1fr) 250px;
   gap: 16px;
   min-height: 0;
   overflow: hidden;
@@ -277,7 +281,7 @@ body {
 }
 
 .marker.hiking:hover {
-  transform: translate(-50%, -75%) scale(1.12);
+  transform: translate(-50%, -72%) scale(1.12);
 }
 
 .marker.water-based {
@@ -294,12 +298,12 @@ body {
 }
 
 .marker.default-route {
-  width: 14px;
-  height: 14px;
+  width: 10px;
+  height: 10px;
   background: #9a9a9a;
   border: 2px solid rgba(255,255,255,0.98);
   border-radius: 50%;
-  box-shadow: 0 0 0 4px rgba(0,0,0,0.05);
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
   transform: translate(-50%, -50%);
 }
 
@@ -315,12 +319,24 @@ body {
 .route-info-card {
   border: 1px solid #e2e2e2;
   border-radius: 18px;
-  overflow: hidden;
   background: #fafafa;
 }
 
-.detail-content,
+.route-info-panel {
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 .route-info-card {
+  padding: 18px;
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.detail-content {
   padding: 18px;
 }
 
@@ -347,7 +363,8 @@ body {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  padding-right: 6px;
 }
 
 .detail-list li,
@@ -385,27 +402,6 @@ body {
   }
 
   .map-panel {
-  display: grid;
-  grid-template-rows: minmax(420px, 1fr) 250px;
-  gap: 16px;
-  min-height: 0;
-  overflow: hidden;
-  }
-  
-  .route-info-panel {
-    min-height: 0;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .route-info-card {
-    border: 1px solid #e2e2e2;
-    border-radius: 18px;
-    background: #fafafa;
-    padding: 18px;
-    overflow: auto;
-    flex: 1;
-    min-height: 0;
+    grid-template-rows: 520px 250px;
   }
 }
