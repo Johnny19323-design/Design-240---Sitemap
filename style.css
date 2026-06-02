@@ -250,10 +250,6 @@ body {
   cursor: default;
 }
 
-.region-shape.active-region {
-  fill: #9fbe8f !important;
-}
-
 .detail-card {
   border: 1px solid #e2e2e2;
   border-radius: 18px;
