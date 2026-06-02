@@ -246,12 +246,8 @@ body {
   fill: #dfe8d3 !important;
   stroke: #ffffff !important;
   stroke-width: 1.2 !important;
-  transition: fill 0.15s ease;
-  cursor: pointer;
-}
-
-.region-shape:hover {
-  fill: #c8dbb9 !important;
+  pointer-events: none;
+  cursor: default;
 }
 
 .region-shape.active-region {

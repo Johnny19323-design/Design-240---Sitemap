@@ -76,18 +76,7 @@ function prepareSVGRegions() {
   const regionShapes = svg.querySelectorAll("path[id], polygon[id]");
 
   regionShapes.forEach((shape) => {
-    const regionId = shape.getAttribute("id");
-    if (!regionId) return;
-
     shape.classList.add("region-shape");
-    shape.dataset.regionId = regionId;
-
-    shape.addEventListener("click", () => {
-      activeRegionName = regionId;
-      highlightActiveRegion();
-      updateRegionPanel(regionId);
-      renderMarkers();
-    });
   });
 }
 
@@ -379,9 +368,9 @@ function updateRegionPanel(regionId) {
 }
 
 function clearDetailPanel() {
-  detailTitle.textContent = "Select a region or campsite";
+  detailTitle.textContent = "Select a campsite";
   detailList.innerHTML = `
-    <li>Click a region on the map or hover over a campsite marker.</li>
+    <li>Use the filters on the left or hover over a campsite marker.</li>
   `;
 }
 
