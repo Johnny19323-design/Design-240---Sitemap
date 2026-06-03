@@ -49,58 +49,83 @@ const routeMeta = {
   "Nelson Lakes Weekend Camp": {
     primaryType: "camping",
     score: 88,
-    start: "Kerr Bay Campsite",
-    end: "Lake Rotoroa Campsite",
-    summary: "A scenic camping-focused route through the Nelson Lakes area, suitable for relaxed weekend travel."
+    summary: "A scenic camping-focused route through the Nelson Lakes area, suitable for relaxed weekend travel.",
+    stops: [
+      "Kerr Bay Campsite",
+      "West Bay Campsite - Jetty Zone",
+      "West Bay Campsite - Buller Zone",
+      "Lake Rotoroa Campsite"
+    ]
   },
   "Marlborough Sounds Camp Route": {
     primaryType: "camping",
     score: 84,
-    start: "Momorangi Campsite",
-    end: "Schoolhouse Bay Campsite",
-    summary: "A coastal camping route with access to bays, views, and short outdoor stops around Marlborough Sounds."
+    summary: "A coastal camping route with access to bays, views, and short outdoor stops around Marlborough Sounds.",
+    stops: [
+      "Momorangi Campsite",
+      "Whatamango Bay Campsite",
+      "Camp Bay Campsite",
+      "Schoolhouse Bay Campsite"
+    ]
   },
   "Canterbury Easy Camp Route": {
     primaryType: "camping",
     score: 80,
-    start: "Lake Middleton Campsite",
-    end: "Ahuriri Bridge Campsite",
-    summary: "An easy-access camping route designed for shorter and simpler outdoor trips."
+    summary: "An easy-access camping route designed for shorter and simpler outdoor trips.",
+    stops: [
+      "Lake Middleton Campsite",
+      "Lake Poaka Campsite",
+      "Ahuriri Bridge Campsite"
+    ]
   },
   "Abel Tasman Coastal Walk": {
     primaryType: "hiking",
     score: 92,
-    start: "Tōtaranui Campground",
-    end: "Awaroa Campsite",
-    summary: "A hiking-focused coastal route based on Great Walk-style movement through Abel Tasman."
+    summary: "A hiking-focused coastal route based on Great Walk-style movement through Abel Tasman.",
+    stops: [
+      "Tōtaranui Campground",
+      "Anchorage Campsite",
+      "Bark Bay Campsite",
+      "Awaroa Campsite"
+    ]
   },
   "Nelson Lakes Hiking Escape": {
     primaryType: "hiking",
     score: 85,
-    start: "Kerr Bay Campsite",
-    end: "West Bay Campsite - Buller Zone",
-    summary: "A hiking-oriented route in the Nelson Lakes area with strong lake and forest scenery."
+    summary: "A hiking-oriented route in the Nelson Lakes area with strong lake and forest scenery.",
+    stops: [
+      "Kerr Bay Campsite",
+      "West Bay Campsite - Buller Zone",
+      "Lake Rotoroa Campsite"
+    ]
   },
   "Canterbury Short Walk Route": {
     primaryType: "hiking",
     score: 78,
-    start: "Lake Poaka Campsite",
-    end: "Lake Middleton Campsite",
-    summary: "A short walking route suited to users looking for manageable outdoor movement over a short time frame."
+    summary: "A short walking route suited to users looking for manageable outdoor movement over a short time frame.",
+    stops: [
+      "Lake Poaka Campsite",
+      "Lake Middleton Campsite"
+    ]
   },
   "Marlborough Sounds Water Route": {
     primaryType: "water-based",
     score: 87,
-    start: "Momorangi Campsite",
-    end: "Camp Bay Campsite",
-    summary: "A water-based route focused on boating, fishing, and coastal access around the Marlborough Sounds."
+    summary: "A water-based route focused on boating, fishing, and coastal access around the Marlborough Sounds.",
+    stops: [
+      "Momorangi Campsite",
+      "Whatamango Bay Campsite",
+      "Camp Bay Campsite"
+    ]
   },
   "Nelson Lakes Lake Activity Route": {
     primaryType: "water-based",
     score: 86,
-    start: "West Bay Campsite - Jetty Zone",
-    end: "Lake Rotoroa Campsite",
-    summary: "A lake-based route organised around water access, boating, and relaxed lakeside activity."
+    summary: "A lake-based route organised around water access, boating, and relaxed lakeside activity.",
+    stops: [
+      "West Bay Campsite - Jetty Zone",
+      "Lake Rotoroa Campsite"
+    ]
   }
 };
 
@@ -292,13 +317,15 @@ function updateMapTransform() {
 
 function applyFilters() {
   filteredSites = allSites.filter((site) => {
+    const routeNames = parseRouteNames(site.routeGroups);
+
     const routeGroupMatch =
-      routeGroupFilter.value === "all" || site.routeGroups.includes(routeGroupFilter.value);
+      routeGroupFilter.value === "all" || routeNames.includes(routeGroupFilter.value);
 
     const selectedType = routeTypeFilter.value.toLowerCase();
     const routeTypeMatch =
       routeTypeFilter.value === "all" ||
-      getPrimaryTypeFromRoutes(site.routeGroups) === selectedType;
+      routeNames.some((routeName) => routeMeta[routeName]?.primaryType === selectedType);
 
     return routeGroupMatch && routeTypeMatch;
   });
@@ -325,56 +352,86 @@ function renderMarkers() {
   const svgWidth = svgRect.width;
   const svgHeight = svgRect.height;
 
-  let projected = filteredSites.map((site) => {
+  const markerEntries = [];
+
+  filteredSites.forEach((site) => {
     const relativeX = mapValue(site.x2, nzMinX, nzMaxX, paddingLeft, paddingRight);
     const relativeY = mapValue(site.y2, nzMaxY, nzMinY, paddingTop, paddingBottom);
 
-    return {
-      ...site,
-      px: svgLeft + svgWidth * relativeX,
-      py: svgTop + svgHeight * relativeY
-    };
+    const basePx = svgLeft + svgWidth * relativeX;
+    const basePy = svgTop + svgHeight * relativeY;
+
+    const matchedRoutes = getMatchedRoutesForSite(site);
+
+    matchedRoutes.forEach((routeName) => {
+      const primaryType = routeMeta[routeName]?.primaryType || "default";
+
+      markerEntries.push({
+        ...site,
+        displayRouteName: routeName,
+        markerType: primaryType,
+        px: basePx,
+        py: basePy
+      });
+    });
   });
 
-  projected = spreadOverlappingPoints(projected);
+  const spreadMarkers = spreadOverlappingMarkers(markerEntries);
 
-  drawRouteLines(projected);
+  drawRouteLines(spreadMarkers);
 
-  projected.forEach((site) => {
+  spreadMarkers.forEach((entry) => {
     const marker = document.createElement("div");
-    marker.className = `marker ${getMarkerClass(site.routeGroups)}`;
+    marker.className = `marker ${getMarkerClassFromType(entry.markerType)}`;
 
-    marker.style.left = `${site.px}px`;
-    marker.style.top = `${site.py}px`;
+    marker.style.left = `${entry.px}px`;
+    marker.style.top = `${entry.py}px`;
 
     marker.addEventListener("mouseenter", () => {
-      updateCampsitePanel(site);
+      updateCampsitePanel(entry);
     });
 
     marker.addEventListener("click", () => {
-      updateCampsitePanel(site);
+      updateCampsitePanel(entry);
     });
 
     markersLayer.appendChild(marker);
   });
 }
 
-function spreadOverlappingPoints(points) {
+function getMatchedRoutesForSite(site) {
+  const routeNames = parseRouteNames(site.routeGroups);
+
+  let matched = routeNames;
+
+  if (routeGroupFilter.value !== "all") {
+    matched = matched.filter((name) => name === routeGroupFilter.value);
+  }
+
+  if (routeTypeFilter.value !== "all") {
+    const selectedType = routeTypeFilter.value.toLowerCase();
+    matched = matched.filter((name) => routeMeta[name]?.primaryType === selectedType);
+  }
+
+  return matched;
+}
+
+function spreadOverlappingMarkers(markers) {
   const threshold = 18;
   const groups = [];
 
-  points.forEach((point) => {
+  markers.forEach((marker) => {
     let placed = false;
 
     for (const group of groups) {
-      const dx = point.px - group.cx;
-      const dy = point.py - group.cy;
+      const dx = marker.px - group.cx;
+      const dy = marker.py - group.cy;
       const dist = Math.sqrt(dx * dx + dy * dy);
 
       if (dist < threshold) {
-        group.points.push(point);
-        group.cx = group.points.reduce((sum, p) => sum + p.px, 0) / group.points.length;
-        group.cy = group.points.reduce((sum, p) => sum + p.py, 0) / group.points.length;
+        group.markers.push(marker);
+        group.cx = group.markers.reduce((sum, m) => sum + m.px, 0) / group.markers.length;
+        group.cy = group.markers.reduce((sum, m) => sum + m.py, 0) / group.markers.length;
         placed = true;
         break;
       }
@@ -382,9 +439,9 @@ function spreadOverlappingPoints(points) {
 
     if (!placed) {
       groups.push({
-        cx: point.px,
-        cy: point.py,
-        points: [point]
+        cx: marker.px,
+        cy: marker.py,
+        markers: [marker]
       });
     }
   });
@@ -392,16 +449,16 @@ function spreadOverlappingPoints(points) {
   const result = [];
 
   groups.forEach((group) => {
-    if (group.points.length === 1) {
-      result.push(group.points[0]);
+    if (group.markers.length === 1) {
+      result.push(group.markers[0]);
       return;
     }
 
-    const radius = 12;
-    group.points.forEach((point, index) => {
-      const angle = (Math.PI * 2 * index) / group.points.length;
+    const radius = 14;
+    group.markers.forEach((marker, index) => {
+      const angle = (Math.PI * 2 * index) / group.markers.length;
       result.push({
-        ...point,
+        ...marker,
         px: group.cx + Math.cos(angle) * radius,
         py: group.cy + Math.sin(angle) * radius
       });
@@ -411,18 +468,27 @@ function spreadOverlappingPoints(points) {
   return result;
 }
 
-function drawRouteLines(points) {
+function drawRouteLines(markers) {
   const selectedRouteGroup = routeGroupFilter.value;
   if (selectedRouteGroup === "all") return;
 
-  const routePoints = points
-    .filter((p) => p.routeGroups.includes(selectedRouteGroup))
-    .sort((a, b) => a.y2 - b.y2);
+  const meta = routeMeta[selectedRouteGroup];
+  if (!meta || !meta.stops || meta.stops.length < 2) return;
 
-  if (routePoints.length < 2) return;
+  const orderedMarkers = meta.stops
+    .map((stopName) =>
+      markers.find(
+        (m) =>
+          m.siteName === stopName &&
+          m.displayRouteName === selectedRouteGroup
+      )
+    )
+    .filter(Boolean);
 
-  const pathData = routePoints
-    .map((p, index) => `${index === 0 ? "M" : "L"} ${p.px} ${p.py}`)
+  if (orderedMarkers.length < 2) return;
+
+  const pathData = orderedMarkers
+    .map((m, index) => `${index === 0 ? "M" : "L"} ${m.px} ${m.py}`)
     .join(" ");
 
   const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
@@ -445,40 +511,40 @@ function updateRoutePanel() {
   const meta = routeMeta[selectedRoute];
   if (!meta) return;
 
-  const sitesInRoute = allSites.filter(site => site.routeGroups.includes(selectedRoute));
-  const siteNames = sitesInRoute.map(site => site.siteName);
+  const stopsText = meta.stops.join(" → ");
 
   routeTitle.textContent = selectedRoute;
   routeInfoList.innerHTML = `
     <li><strong>Primary Type:</strong> ${formatPrimaryType(meta.primaryType)}</li>
-    <li><strong>Start:</strong> ${meta.start}</li>
-    <li><strong>End:</strong> ${meta.end}</li>
+    <li><strong>Start:</strong> ${meta.stops[0]}</li>
+    <li><strong>Route Stops:</strong> ${stopsText}</li>
+    <li><strong>End:</strong> ${meta.stops[meta.stops.length - 1]}</li>
     <li><strong>Recommendation Score:</strong> ${meta.score}</li>
     <li><strong>Summary:</strong> ${meta.summary}</li>
-    <li><strong>Campsites in Route:</strong> ${siteNames.join(", ")}</li>
   `;
 }
 
-function updateCampsitePanel(site) {
-  detailTitle.textContent = site.siteName;
+function updateCampsitePanel(entry) {
+  detailTitle.textContent = entry.siteName;
 
   detailList.innerHTML = `
-    <li><strong>Route Group:</strong> ${site.routeGroups}</li>
-    <li><strong>Route Type:</strong> ${site.routeTypeFocus}</li>
-    <li><strong>Cluster:</strong> ${site.clusterGroup}</li>
-    <li><strong>Region:</strong> ${site.region}</li>
-    <li><strong>Place:</strong> ${site.place}</li>
-    <li><strong>Category:</strong> ${site.category}</li>
-    <li><strong>Access:</strong> ${site.accessBy}</li>
-    <li><strong>Activities:</strong> ${site.activities}</li>
-    <li><strong>Facilities:</strong> ${site.facilities}</li>
-    <li><strong>Landscape:</strong> ${site.landscape}</li>
-    <li><strong>Dogs:</strong> ${site.dogs}</li>
-    <li><strong>Bookable:</strong> ${site.bookable}</li>
-    <li><strong>Free:</strong> ${site.free}</li>
-    <li><strong>Unpowered Sites:</strong> ${site.unpoweredSites}</li>
+    <li><strong>Selected Route:</strong> ${entry.displayRouteName}</li>
+    <li><strong>Route Group(s):</strong> ${entry.routeGroups}</li>
+    <li><strong>Route Type:</strong> ${entry.routeTypeFocus}</li>
+    <li><strong>Cluster:</strong> ${entry.clusterGroup}</li>
+    <li><strong>Region:</strong> ${entry.region}</li>
+    <li><strong>Place:</strong> ${entry.place}</li>
+    <li><strong>Category:</strong> ${entry.category}</li>
+    <li><strong>Access:</strong> ${entry.accessBy}</li>
+    <li><strong>Activities:</strong> ${entry.activities}</li>
+    <li><strong>Facilities:</strong> ${entry.facilities}</li>
+    <li><strong>Landscape:</strong> ${entry.landscape}</li>
+    <li><strong>Dogs:</strong> ${entry.dogs}</li>
+    <li><strong>Bookable:</strong> ${entry.bookable}</li>
+    <li><strong>Free:</strong> ${entry.free}</li>
+    <li><strong>Unpowered Sites:</strong> ${entry.unpoweredSites}</li>
     <li><strong>Website:</strong> ${
-      site.url ? `<a href="${site.url}" target="_blank">Open DOC page</a>` : "Not available"
+      entry.url ? `<a href="${entry.url}" target="_blank">Open DOC page</a>` : "Not available"
     }</li>
   `;
 }
@@ -490,23 +556,17 @@ function clearDetailPanel() {
   `;
 }
 
-function getPrimaryTypeFromRoutes(routeGroupsText) {
-  const routeNames = routeGroupsText.split("|").map(r => r.trim());
-
-  for (const routeName of routeNames) {
-    if (routeMeta[routeName]) {
-      return routeMeta[routeName].primaryType;
-    }
-  }
-
-  return "default";
+function parseRouteNames(routeGroupsText) {
+  return String(routeGroupsText)
+    .split("|")
+    .map((r) => r.trim())
+    .filter(Boolean);
 }
 
-function getMarkerClass(routeGroupsText) {
-  const primary = getPrimaryTypeFromRoutes(routeGroupsText);
-  if (primary === "camping") return "camping";
-  if (primary === "hiking") return "hiking";
-  if (primary === "water-based") return "water-based";
+function getMarkerClassFromType(type) {
+  if (type === "camping") return "camping";
+  if (type === "hiking") return "hiking";
+  if (type === "water-based") return "water-based";
   return "default-route";
 }
 
