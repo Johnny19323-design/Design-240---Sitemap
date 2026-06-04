@@ -101,7 +101,6 @@ body {
   margin-top: 4px;
 }
 
-.route-note,
 .legend-box {
   margin-top: 22px;
   padding: 16px;
@@ -110,16 +109,9 @@ body {
   border: 1px solid #e6dccb;
 }
 
-.route-note h3,
 .legend-box h3 {
   font-size: 0.96rem;
   margin-bottom: 8px;
-}
-
-.route-note p {
-  font-size: 0.92rem;
-  line-height: 1.55;
-  color: #4a4a4a;
 }
 
 .legend-item {

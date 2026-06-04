@@ -227,8 +227,19 @@ function fillSelect(selectElement, values) {
 }
 
 function setupEvents() {
-  routeGroupFilter.addEventListener("change", onFilterChange);
-  routeTypeFilter.addEventListener("change", onFilterChange);
+  routeGroupFilter.addEventListener("change", () => {
+    if (routeGroupFilter.value !== "all") {
+      routeTypeFilter.value = "all";
+    }
+    applyFilters();
+  });
+
+  routeTypeFilter.addEventListener("change", () => {
+    if (routeTypeFilter.value !== "all") {
+      routeGroupFilter.value = "all";
+    }
+    applyFilters();
+  });
 
   resetBtn.addEventListener("click", () => {
     routeGroupFilter.value = "all";
@@ -305,10 +316,6 @@ function setupEvents() {
   window.addEventListener("resize", () => {
     renderMarkers();
   });
-}
-
-function onFilterChange() {
-  applyFilters();
 }
 
 function updateMapTransform() {
